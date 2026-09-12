@@ -1,0 +1,2 @@
+import React from 'react';
+export function ContinueLearning({ course }) { return <section className="continue-card dashboard-panel"><div className="course-top"><span className="course-icon">⌘</span><span className="premium-mini">FREE PATH</span></div><small>CONTINUE LEARNING</small><h2>{course.title}</h2><div className="progress-line"><span><i style={{ width: `${course.progress}%` }} /></span><b>{course.progress}%</b></div><p>Next up: <strong>{course.next}</strong></p><button className="text-button">Continue learning <span>↗</span></button></section>; }

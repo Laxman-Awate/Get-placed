@@ -1,0 +1,1 @@
+import React from 'react'; export function SectionScoreCard({name,score,total}){return <div className="section-score"><span>{name}</span><b>{score} / {total}</b><i><em style={{width:`${total?score/total*100:0}%`}}/></i></div>;}

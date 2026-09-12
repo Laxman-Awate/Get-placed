@@ -1,0 +1,2 @@
+import React from 'react';
+export function SemesterCard({ semester }) { return <article className="learning-card semester-card"><div className="semester-number">{semester.id.replace('semester-', '0')}</div><div><h3>{semester.name}</h3><p>{semester.subjects} Subjects</p></div><strong>{semester.progress}%</strong><div className="mini-progress"><i style={{ width: `${semester.progress}%` }} /></div><a className="card-link" href={`/learning/academics/${semester.id}`}>View subjects <span>↗</span></a></article>; }

@@ -1,0 +1,2 @@
+import React from 'react';
+export function DSAProgress({ progress }) { return <section className="dsa-progress dashboard-panel"><div><span className="section-kicker">YOUR ROADMAP</span><h2>DSA Progress</h2><p><strong>{progress.solved}</strong> / {progress.total || 0} Problems Solved</p></div><div className="dsa-progress-value"><strong>{progress.percentage}%</strong><span><i style={{ width: `${progress.percentage}%` }} /></span></div></section>; }

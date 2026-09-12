@@ -1,0 +1,4 @@
+import React from 'react';
+import { BookmarkButton } from './BookmarkButton';
+import { ProblemStatus } from './ProblemStatus';
+export function DSAProblemRow({ problem, topic, onStatus, onBookmark }) { return <article className="dsa-problem-row"><span className="problem-number">{String(problem.number).padStart(2, '0')}</span><div className="problem-title"><a href={`/practice/dsa/${problem.id}`}>{problem.title}</a><small>{topic?.name || problem.topicId} · {problem.pattern}</small></div><span className={`difficulty ${problem.difficulty.toLowerCase()}`}>{problem.difficulty}</span><ProblemStatus solved={problem.solved} onClick={() => onStatus(problem.id, !problem.solved)} /><BookmarkButton active={problem.bookmarked} onClick={() => onBookmark(problem.id)} /><a className="open-problem" href={`/practice/dsa/${problem.id}`}>Open <span>↗</span></a></article>; }
