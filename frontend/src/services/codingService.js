@@ -1,0 +1,2 @@
+import { CODING_PROBLEMS, CODING_TOPICS } from '../constants/coding';
+export const codingService = { getCodingProblems:async()=>CODING_PROBLEMS, getCodingProblem:async id=>CODING_PROBLEMS.find(problem=>problem.id===id)||null, getCodingTopics:async()=>CODING_TOPICS, getRecommendedProblems:async()=>CODING_PROBLEMS.slice(0,4), getRecentProblems:async()=>CODING_PROBLEMS.slice(1,3), getSavedProblems:async()=>CODING_PROBLEMS.filter(problem=>problem.bookmarked) };

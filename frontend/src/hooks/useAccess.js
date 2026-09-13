@@ -1,0 +1,2 @@
+import { ACCESS_LEVELS, CURRENT_USER_PLAN } from '../constants/access'; import { canAccessContent, getAccessState } from '../services/accessService';
+export function useAccess(){const isPremium=CURRENT_USER_PLAN==='premium';return {plan:CURRENT_USER_PLAN,isPremium,isFree:!isPremium,canAccess:content=>canAccessContent(content,CURRENT_USER_PLAN),getAccessState:content=>getAccessState(content,CURRENT_USER_PLAN),levels:ACCESS_LEVELS};}

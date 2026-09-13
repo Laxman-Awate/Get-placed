@@ -1,0 +1,2 @@
+import { useEffect,useState } from 'react'; import { codingService } from '../services/codingService';
+export function useCodingProblem(id){const [problem,setProblem]=useState(null);useEffect(()=>{codingService.getCodingProblem(id).then(setProblem)},[id]);const toggleSolved=()=>setProblem(current=>({...current,solved:!current.solved}));const toggleBookmark=()=>setProblem(current=>({...current,bookmarked:!current.bookmarked}));return {problem,toggleSolved,toggleBookmark};}

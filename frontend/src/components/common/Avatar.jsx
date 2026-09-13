@@ -1,0 +1,1 @@
+import React from 'react'; export function Avatar({name,imageUrl,size='medium'}){return imageUrl?<img className={`avatar ${size}`} src={imageUrl} alt={`${name} profile`} />:<span className={`avatar ${size}`} aria-label={`${name} initials`}>{name.split(' ').map(part=>part[0]).join('').slice(0,2).toUpperCase()}</span>}

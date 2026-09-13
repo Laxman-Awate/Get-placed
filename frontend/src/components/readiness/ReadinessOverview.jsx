@@ -1,0 +1,1 @@
+import React from 'react'; export function ReadinessOverview({score,level}){return <div className="readiness-overview dashboard-panel"><div><span className="section-kicker">PLACEMENT READINESS</span><h2>Overall readiness</h2><p>Based on your current learning and practice activity.</p></div><div className="readiness-score"><strong>{score}%</strong><span>{level}</span></div></div>}

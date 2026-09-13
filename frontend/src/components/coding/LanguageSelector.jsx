@@ -1,0 +1,1 @@
+import React from 'react'; export function LanguageSelector({languages,language,onChange}){return <label className="language-selector">Language<select value={language} onChange={e=>onChange(e.target.value)}>{languages.map(item=><option key={item}>{item}</option>)}</select></label>}
