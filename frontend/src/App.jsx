@@ -35,6 +35,7 @@ import { CodingProblemPage } from './pages/student/CodingProblemPage';
 import { PlacementReadinessPage } from './pages/student/PlacementReadinessPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthGuard } from './components/navigation/AuthGuard';
+import { ThemeProvider } from './context/ThemeContext';
 import './styles.css';
 
 function Application() {
@@ -49,6 +50,6 @@ function Application() {
   return isStudentPath ? <AuthGuard>{content}</AuthGuard> : content;
 }
 
-function App() { return <AuthProvider><Application /></AuthProvider>; }
+function App() { return <ThemeProvider><AuthProvider><Application /></AuthProvider></ThemeProvider>; }
 
 export default App;

@@ -1,0 +1,8 @@
+import React from 'react';
+import { useContributionActivity } from '../../hooks/useContributionActivity';
+import { getActivityLevel } from '../../utils/contributionCalendar';
+
+export function ContributionCalendar() {
+  const { weeks, months, totalSubmissions, activeDays } = useContributionActivity();
+  return <section className="contribution-card dashboard-panel" aria-labelledby="coding-activity-title"><div className="contribution-heading"><div><span className="section-kicker">CODING ACTIVITY</span><h2 id="coding-activity-title">Problem-solving activity</h2><p>Your submission activity over the past year.</p></div><div className="contribution-stats"><strong>{totalSubmissions}</strong><span>submissions</span><strong>{activeDays}</strong><span>active days</span></div></div><div className="contribution-scroll"><div className="contribution-months"><span />{months.map(month => <span key={month.key}>{month.label}</span>)}</div><div className="contribution-grid"><div className="weekday-labels"><span>Mon</span><span>Wed</span><span>Fri</span></div><div className="contribution-weeks">{weeks.map((week, index) => <div className="contribution-week" key={index}>{week.map(day => <span key={day.key} className={`contribution-day level-${getActivityLevel(day.count)} ${day.inRange ? '' : 'outside'}`} title={`${day.date.toLocaleDateString()} — ${day.count} submission${day.count === 1 ? '' : 's'}`} aria-label={`${day.date.toLocaleDateString()} — ${day.count} submissions`} />)}</div>)}</div></div></div><div className="contribution-footer"><span>Less activity</span><i className="level-0" /><i className="level-1" /><i className="level-2" /><i className="level-3" /><i className="level-4" /><span>More activity</span></div></section>;
+}
