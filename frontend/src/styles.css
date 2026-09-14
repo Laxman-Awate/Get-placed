@@ -131,3 +131,6 @@ html[data-theme="light"] .dsa-progress,html[data-theme="light"] .dsa-topic-secti
 html[data-theme="light"] .dsa-problem-list{background:#f8faff}
 @media(max-width:900px){.dsa-problem-list{margin-left:18px;margin-right:18px}.dsa-problem-list::before{left:-10px}}
 @media(max-width:620px){.dsa-topic-section{padding-bottom:8px}.topic-section-head{border-radius:8px 8px 6px 6px}.dsa-problem-list{margin-left:10px;margin-right:10px;border-radius:8px}.dsa-problem-list::before{left:-6px;top:-8px;height:calc(100% + 8px)}}
+/* Academic notes resource hub */
+.academics-note{display:block;color:var(--student-muted);font-size:11px;margin-top:10px}.academic-resource-card{min-height:156px;display:flex;flex-direction:column;gap:0;padding:20px}.academic-resource-card .semester-number{margin-bottom:20px}.academic-resource-card h3{font-size:15px}.academic-resource-card p{font-size:11px;color:var(--student-muted)}.academic-resource-card .card-link{position:static;margin-top:auto;padding-top:20px}.academic-resource-card .card-link-disabled{color:#68768c;cursor:default}.academic-resource-card:hover{transform:translateY(-1px)}
+@media(max-width:620px){.academics-note{line-height:1.5}.academic-resource-card{min-height:145px;padding:18px}.academic-resource-card .semester-number{margin-bottom:16px}}
