@@ -3,5 +3,5 @@ import { Navbar } from '../components/navigation/Navbar';
 import { Footer } from '../components/navigation/Footer';
 
 export function PublicLayout({ children }) {
-  return <><Navbar />{children}<Footer /></>;
+  return <div className="public-layout"><Navbar />{children}<Footer /></div>;
 }
