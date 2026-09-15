@@ -1,0 +1,25 @@
+export const DSA_TOPICS = [
+  { id: 'arrays', name: 'Arrays', description: 'Traversal, searching, manipulation and common problem-solving patterns.', order: 1 },
+  { id: 'strings', name: 'Strings', description: 'Build fluency with characters, frequency maps and string patterns.', order: 2 },
+  { id: 'linked-list', name: 'Linked List', description: 'Understand nodes, pointers and linked-list transformations.', order: 3 },
+  { id: 'binary-search', name: 'Binary Search', description: 'Learn to reduce search spaces and reason about sorted data.', order: 4 },
+  { id: 'recursion', name: 'Recursion', description: 'Break complex problems into smaller, repeatable decisions.', order: 5 },
+  { id: 'stack-queue', name: 'Stack & Queue', description: 'Practice ordering, monotonic structures and breadth-first thinking.', order: 6 },
+  { id: 'sliding-window', name: 'Sliding Window', description: 'Use moving windows to solve subarray and substring problems.', order: 7 },
+  { id: 'hashing', name: 'Hashing', description: 'Trade space for speed with maps, sets and frequency counting.', order: 8 },
+  { id: 'trees', name: 'Trees', description: 'Explore traversal, recursion and hierarchical data.', order: 9 },
+  { id: 'heaps', name: 'Heaps', description: 'Find priorities efficiently with heap-based structures.', order: 10 },
+  { id: 'graphs', name: 'Graphs', description: 'Model relationships with traversals and shortest paths.', order: 11 },
+  { id: 'greedy', name: 'Greedy', description: 'Make locally optimal choices and prove when they work.', order: 12 },
+  { id: 'dynamic-programming', name: 'Dynamic Programming', description: 'Turn overlapping subproblems into efficient solutions.', order: 13 },
+];
+export const DSA_PROBLEMS = [
+  { id: 'two-sum', number: 1, title: 'Two Sum', topicId: 'arrays', difficulty: 'Easy', pattern: 'Hashing', solved: true, bookmarked: false, description: 'Given a list of numbers and a target, return the indices of two values that add up to the target.', examples: ['Input: [2, 7, 11, 15], target 9', 'Output: [0, 1]'], constraints: 'Use each input position at most once.' },
+  { id: 'best-time-to-buy', number: 2, title: 'Best Time to Buy and Sell Stock', topicId: 'arrays', difficulty: 'Easy', pattern: 'Greedy', solved: true, bookmarked: true, description: 'Given daily prices, find the maximum profit from one buy and one later sell.', examples: ['Input: [7, 1, 5, 3, 6, 4]', 'Output: 5'], constraints: 'You must buy before you sell.' },
+  { id: 'maximum-subarray', number: 3, title: 'Maximum Subarray', topicId: 'arrays', difficulty: 'Medium', pattern: "Kadane's Algorithm", solved: false, bookmarked: false, description: 'Find the contiguous subarray with the largest sum and return that sum.', examples: ['Input: [-2, 1, -3, 4, -1, 2, 1]', 'Output: 6'], constraints: 'The array contains at least one number.' },
+  { id: 'move-zeroes', number: 4, title: 'Move Zeroes', topicId: 'arrays', difficulty: 'Easy', pattern: 'Two Pointer', solved: true, bookmarked: false, description: 'Move all zero values to the end while preserving the relative order of non-zero values.', examples: ['Input: [0, 1, 0, 3, 12]', 'Output: [1, 3, 12, 0, 0]'], constraints: 'Modify the list in place.' },
+  { id: 'reverse-string', number: 5, title: 'Reverse a String', topicId: 'strings', difficulty: 'Easy', pattern: 'Two Pointer', solved: false, bookmarked: false, description: 'Reverse the characters in a mutable string sequence in place.', examples: ['Input: [h, e, l, l, o]', 'Output: [o, l, l, e, h]'], constraints: 'Use constant extra space.' },
+  { id: 'valid-anagram', number: 6, title: 'Valid Anagram', topicId: 'strings', difficulty: 'Easy', pattern: 'Hashing', solved: false, bookmarked: false, description: 'Determine whether two strings contain the same characters with the same frequencies.', examples: ['Input: listen, silent', 'Output: true'], constraints: 'Inputs contain lowercase English letters.' },
+  { id: 'merge-lists', number: 7, title: 'Merge Sorted Lists', topicId: 'linked-list', difficulty: 'Medium', pattern: 'Two Pointer', solved: false, bookmarked: false, description: 'Merge two sorted linked lists into one sorted list.', examples: ['Input: 1→3 and 2→4', 'Output: 1→2→3→4'], constraints: 'Reuse existing nodes where possible.' },
+  { id: 'first-binary-search', number: 8, title: 'Binary Search', topicId: 'binary-search', difficulty: 'Easy', pattern: 'Binary Search', solved: false, bookmarked: false, description: 'Return the index of a target value in a sorted array, or -1 when absent.', examples: ['Input: [1, 3, 5, 7], target 5', 'Output: 2'], constraints: 'The array is sorted in ascending order.' },
+];

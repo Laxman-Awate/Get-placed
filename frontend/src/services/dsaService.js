@@ -1,0 +1,3 @@
+import { DSA_TOPICS, DSA_PROBLEMS } from '../constants/dsa';
+let problems = DSA_PROBLEMS.map(problem => ({ ...problem }));
+export const dsaService = { getDSASheet: async () => ({ topics: DSA_TOPICS, problems }), getDSAProblems: async () => problems, getDSAProblemById: async id => problems.find(problem => problem.id === id), updateProblemStatus: async (id, solved) => { problems = problems.map(problem => problem.id === id ? { ...problem, solved } : problem); return problems.find(problem => problem.id === id); }, toggleBookmark: async id => { problems = problems.map(problem => problem.id === id ? { ...problem, bookmarked: !problem.bookmarked } : problem); return problems.find(problem => problem.id === id); } };

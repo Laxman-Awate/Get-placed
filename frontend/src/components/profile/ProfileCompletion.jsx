@@ -1,0 +1,1 @@
+import React from 'react'; export function ProfileCompletion({percentage,onComplete}){return <div className="profile-completion"><div><span>Profile completion</span><b>{percentage}%</b></div><i><em style={{width:`${percentage}%`}} /></i>{percentage<100&&<button className="text-button" onClick={onComplete}>Complete profile <span>↗</span></button>}</div>}

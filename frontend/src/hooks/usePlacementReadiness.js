@@ -1,0 +1,2 @@
+import { useEffect,useMemo,useState } from 'react'; import {readinessService} from '../services/readinessService'; import {calculateReadinessScore,getReadinessLevel,getRecommendations} from '../utils/readinessUtils';
+export function usePlacementReadiness(){const [metrics,setMetrics]=useState([]);useEffect(()=>{readinessService.getReadiness().then(setMetrics)},[]);const score=useMemo(()=>calculateReadinessScore(metrics),[metrics]);return {metrics,score,level:getReadinessLevel(score),recommendations:getRecommendations(metrics),loading:!metrics.length};}

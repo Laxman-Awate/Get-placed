@@ -1,0 +1,1 @@
+import React,{useState} from 'react'; export function HintSection({hints}){const [shown,setShown]=useState(0);return <div className="hint-section"><h2>Hints</h2>{hints.map((hint,i)=><div key={hint}>{i<shown?<p><b>Hint {i+1}</b> {hint}</p>:i===shown?<button className="subtle-button" onClick={()=>setShown(shown+1)}>Reveal Hint {i+1}</button>:null}</div>)}</div>}

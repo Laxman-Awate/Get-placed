@@ -1,0 +1,2 @@
+import { useEffect, useState } from 'react'; import { aptitudeService } from '../services/aptitudeService';
+export function useAptitude() { const [state,setState]=useState({categories:[],progress:null,loading:true}); useEffect(()=>{Promise.all([aptitudeService.getCategories(),aptitudeService.getProgress()]).then(([categories,progress])=>setState({categories,progress,loading:false}));},[]); return state; }

@@ -1,0 +1,2 @@
+import React from 'react';
+export function PreparationRoadmap({ steps }) { return <div className="preparation-roadmap">{steps.map((step, index) => <div className="roadmap-step" key={step}><span className={index === 0 ? 'roadmap-number done' : 'roadmap-number'}>{index === 0 ? '✓' : String(index + 1).padStart(2, '0')}</span><div><strong>{step}</strong><small>{index === 0 ? 'Available · Free' : 'Premium · Locked'}</small></div><span className={index === 0 ? 'roadmap-state available' : 'roadmap-state'}>{index === 0 ? 'Available' : 'Locked'}</span></div>)}</div>; }

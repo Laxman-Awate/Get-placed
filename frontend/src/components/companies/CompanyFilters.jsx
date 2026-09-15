@@ -1,0 +1,2 @@
+import React from 'react';
+export function CompanyFilters({ search, category, onSearch, onCategory }) { return <div className="company-filters"><label className="company-search">⌕<input value={search} onChange={event => onSearch(event.target.value)} placeholder="Search companies..." /></label><div className="category-filters">{['All', 'Service Based', 'Product Based', 'Mass Recruiters', 'Tech Companies'].map(item => <button key={item} className={category === item ? 'filter-active' : ''} onClick={() => onCategory(item)}>{item}</button>)}</div></div>; }

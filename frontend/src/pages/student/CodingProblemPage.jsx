@@ -1,0 +1,20 @@
+import React from 'react';
+import { useCodingProblem } from '../../hooks/useCodingProblem';
+import { useCodeEditor } from '../../hooks/useCodeEditor';
+import { useCodeExecution } from '../../hooks/useCodeExecution';
+import { BookmarkButton } from '../../components/practice/BookmarkButton';
+import { HintSection } from '../../components/coding/HintSection';
+import { CodingWorkspace } from '../../components/coding/CodingWorkspace';
+import { LearningBreadcrumbs } from '../../components/learning/LearningBreadcrumbs';
+
+export function CodingProblemPage() {
+  const id = window.location.pathname.split('/')[3];
+  const { problem, toggleSolved, toggleBookmark } = useCodingProblem(id);
+  // Hooks must run on every render, including while the problem is loading.
+  const editor = useCodeEditor(problem);
+  const execution = useCodeExecution();
+
+  if (!problem) return <div className="empty-companies"><h2>Problem not found.</h2><p>Choose a problem from the coding library.</p><a className="button" href="/coding/problems">Back to problems</a></div>;
+
+  return <div className="coding-problem-page"><LearningBreadcrumbs items={[{ label: 'Coding', href: '/coding' }, { label: 'Problems', href: '/coding/problems' }, { label: problem.title }]} /><header className="coding-problem-header"><div><span className="section-kicker">#{String(problem.number).padStart(3, '0')} · {problem.topic}</span><h1>{problem.title}</h1><div className="problem-meta"><span className={`difficulty ${problem.difficulty.toLowerCase()}`}>{problem.difficulty}</span><span>{problem.pattern}</span></div></div><div className="coding-problem-actions"><button className={problem.solved ? 'problem-status solved' : 'problem-status'} onClick={toggleSolved}>{problem.solved ? '✓ Solved' : '○ Mark as solved'}</button><BookmarkButton active={problem.bookmarked} onClick={toggleBookmark} /></div></header><div className="coding-workspace-layout"><article className="coding-description dashboard-panel"><h2>Problem</h2><p>{problem.description}</p><h2>Examples</h2>{problem.examples.map(example => <pre key={example}>{example}</pre>)}<h2>Constraints</h2><ul>{problem.constraints.map(item => <li key={item}>{item}</li>)}</ul><HintSection hints={problem.hints} /></article><CodingWorkspace problem={problem} editor={editor} execution={execution} /></div></div>;
+}

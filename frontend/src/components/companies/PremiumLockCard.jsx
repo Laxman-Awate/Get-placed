@@ -1,0 +1,2 @@
+import React from 'react'; import { PremiumBadge } from '../common/PremiumBadge';
+export function PremiumLockCard({ title, description, href = '/pricing', action = 'Unlock premium' }) { return <article className="premium-lock-card"><span className="lock-icon">⌕</span><div><PremiumBadge label="PREMIUM MODULE"/><h3>{title}</h3><p>{description}</p></div><a className="button" href={href}>{action} <span>↗</span></a></article>; }

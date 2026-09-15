@@ -1,0 +1,5 @@
+import React from 'react';
+import { SUBJECT_TOPICS } from '../../constants/learning';
+import { TopicCard } from '../../components/learning/TopicCard';
+import { LearningBreadcrumbs } from '../../components/learning/LearningBreadcrumbs';
+export function SubjectPage() { const parts = window.location.pathname.split('/'); const semester = parts[3]; const subject = (parts[4] || 'programming-fundamentals').replaceAll('-', ' ').replace(/\b\w/g, char => char.toUpperCase()); return <div className="learning-page"><LearningBreadcrumbs items={[{ label: 'Learning', href: '/learning' }, { label: 'Academics', href: '/learning/academics' }, { label: semester, href: `/learning/academics/${semester}` }, { label: subject }]} /><div className="page-title"><span className="section-kicker">SUBJECT · FREE</span><h1>{subject}</h1><p>Work through each topic at your own pace.</p></div><div className="learning-list">{SUBJECT_TOPICS.map(topic => <TopicCard key={topic.id} topic={topic} href={`/learning/academics/${semester}/${parts[4]}/${topic.id}`} />)}</div></div>; }

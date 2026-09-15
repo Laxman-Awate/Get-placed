@@ -1,0 +1,2 @@
+import React from 'react';
+export function CompanyProgress({ progress }) { return <div className="company-progress"><div className="overall-progress"><span>Overall Progress</span><b>{progress.overall}%</b></div><span className="progress-track"><i style={{ width: `${progress.overall}%` }} /></span><div className="progress-breakdown">{[['Aptitude', progress.aptitude], ['DSA', progress.dsa], ['Technical', progress.technical], ['Interview', progress.interview]].map(([label, value]) => <div key={label}><span>{label}</span><b>{value}%</b></div>)}</div></div>; }

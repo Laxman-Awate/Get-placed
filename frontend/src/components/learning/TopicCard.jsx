@@ -1,0 +1,2 @@
+import React from 'react';
+export function TopicCard({ topic, href }) { return <article className="learning-card topic-card"><span className={topic.complete ? 'topic-state complete' : topic.current ? 'topic-state current' : 'topic-state'}>{topic.complete ? '✓' : topic.current ? '→' : '○'}</span><div><h3>{topic.name}</h3><p>{topic.minutes ? `${topic.minutes} min lesson` : `${topic.lessons} lessons · ${topic.level}`}</p></div><a className="card-link" href={href}>Open <span>↗</span></a></article>; }

@@ -1,0 +1,15 @@
+import React, { useRef } from 'react';
+import { useStudentProfile } from '../../hooks/useStudentProfile';
+import { usePlacementReadiness } from '../../hooks/usePlacementReadiness';
+import { Avatar } from '../../components/common/Avatar';
+import { ProfileCompletion } from '../../components/profile/ProfileCompletion';
+import { ProfileEditForm } from '../../components/profile/ProfileEditForm';
+import { ContributionCalendar } from '../../components/profile/ContributionCalendar';
+
+export function ProfilePage() {
+  const { profile, editing, setEditing, completion, update, save, saved } = useStudentProfile();
+  const readiness = usePlacementReadiness(); const editRef = useRef();
+  if (!profile) return <div className="loading-panel">Loading profile…</div>;
+  const startEdit = () => { setEditing(true); editRef.current?.scrollIntoView({ behavior: 'smooth' }); };
+  return <div className="profile-page"><header className="profile-header dashboard-panel"><Avatar name={profile.name} /><div className="profile-identity"><h1>{profile.name}</h1><p>{profile.email}</p><span>{profile.college} · {profile.degree} {profile.branch}</span><small>Graduation: {profile.graduationYear}</small></div><div className="profile-header-actions"><button className="button" onClick={startEdit}>Edit profile</button><ProfileCompletion percentage={completion} onComplete={startEdit} /></div></header>{saved && <div className="save-message">Profile updated successfully</div>}<div className="profile-summary-grid"><article className="dashboard-panel profile-summary-card"><span className="section-kicker">PLACEMENT READINESS</span><strong>{readiness.score}%</strong><span>{readiness.level}</span><a className="text-button" href="/placement-readiness">View placement readiness <span>↗</span></a></article><article className="dashboard-panel profile-summary-card"><span className="section-kicker">SKILLS</span><div className="skill-pills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div><button className="text-button" onClick={startEdit}>Update skills <span>↗</span></button></article></div><div className="profile-sections"><section className="profile-info-card dashboard-panel"><h2>Personal information</h2><div><span>Email</span><b>{profile.email}</b></div><div><span>Phone</span><b>{profile.phone || 'Not added'}</b></div><div><span>Location</span><b>{profile.location}</b></div></section><section className="profile-info-card dashboard-panel"><h2>Academic information</h2><div><span>College</span><b>{profile.college}</b></div><div><span>Branch</span><b>{profile.branch}</b></div><div><span>Semester · CGPA</span><b>{profile.semester} · {profile.cgpa}</b></div></section><section className="profile-info-card dashboard-panel"><h2>Placement preferences</h2><div><span>Preferred role</span><b>{profile.role}</b></div><div><span>Locations</span><b>{profile.locations}</b></div><div><span>Target companies</span><b>{profile.companies.join(', ')}</b></div></section></div><ContributionCalendar /><div ref={editRef}>{editing && <ProfileEditForm profile={profile} onChange={update} onSave={save} onCancel={() => setEditing(false)} />}</div></div>;
+}
