@@ -1,1 +1,1 @@
-import { READINESS_METRICS } from '../constants/readiness'; export const readinessService={getReadiness:async()=>READINESS_METRICS};
+import { apiRequest } from './apiClient'; export const readinessService={getReadiness:async()=>apiRequest('/readiness')};

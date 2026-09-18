@@ -1,2 +1,7 @@
-import { APTITUDE_CATEGORIES, APTITUDE_TOPICS, APTITUDE_QUESTIONS, APTITUDE_PROGRESS } from '../constants/aptitude';
-export const aptitudeService = { getCategories: async () => APTITUDE_CATEGORIES, getTopics: async categoryId => (APTITUDE_TOPICS[categoryId] || []).map(([id,name,description,difficulty,questions,free,progress]) => ({id,name,description,difficulty,questions,free,progress})), getQuestions: async topicId => APTITUDE_QUESTIONS.filter(question => question.topicId === topicId), getProgress: async () => APTITUDE_PROGRESS };
+import { apiRequest } from './apiClient';
+export const aptitudeService = {
+  getCategories: async () => apiRequest('/aptitude/categories'),
+  getTopics: async categoryId => apiRequest(`/aptitude/categories/${categoryId}/topics`),
+  getQuestions: async topicId => apiRequest(`/aptitude/topics/${topicId}/questions`),
+  getProgress: async () => apiRequest('/aptitude/progress'),
+};
