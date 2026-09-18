@@ -1,8 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { apiRequest } from '../services/apiClient';
 
 const dateKey = date => date.toISOString().slice(0, 10);
 export function useLearningStreak() {
-  return useMemo(() => {
+  const [activity,setActivity]=useState({});
+  useEffect(()=>{apiRequest('/activity/calendar').then(setActivity).catch(()=>setActivity({}))},[]);
+  const end = new Date();
+  return (() => {
     const end = new Date();
     end.setHours(12, 0, 0, 0);
     const start = new Date(end);
@@ -16,15 +20,6 @@ export function useLearningStreak() {
     gridEnd.setDate(end.getDate() + (6 - mondayOffset(end)));
     const weekIndex = date => Math.floor((date - gridStart) / 86400000 / 7);
 
-    const activity = {};
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      // Seeded mock data: sparse like a real contribution calendar, but stable between renders.
-      const base = (date.getFullYear() * 23 + (date.getMonth() + 1) * 47 + date.getDate() * 71 + date.getDay() * 13) % 100;
-      const seasonalShift = (date.getMonth() * 3 + date.getFullYear()) % 9;
-      const seed = (base + seasonalShift) % 100;
-      activity[dateKey(date)] = seed < 72 ? 0 : seed < 91 ? 1 : seed < 97 ? 2 : seed < 99 ? 3 : 5;
-    }
-
     const weeks = [];
     for (let date = new Date(gridStart); date <= gridEnd; date.setDate(date.getDate() + 1)) {
       if (!weeks.length || weeks[weeks.length - 1].length === 7) weeks.push([]);
@@ -32,7 +27,7 @@ export function useLearningStreak() {
       weeks[weeks.length - 1].push({
         id: dateKey(current),
         date: current,
-        activities: activity[dateKey(current)] || 0,
+        activities: Number(activity[dateKey(current)] || 0),
         inRange: current >= start && current <= end,
       });
     }
@@ -70,5 +65,5 @@ export function useLearningStreak() {
       activeDays: counts.filter(Boolean).length,
       maxStreak,
     };
-  }, []);
+  })();
 }

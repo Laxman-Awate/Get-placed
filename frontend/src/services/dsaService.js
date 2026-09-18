@@ -1,3 +1,11 @@
-import { DSA_TOPICS, DSA_PROBLEMS } from '../constants/dsa';
-let problems = DSA_PROBLEMS.map(problem => ({ ...problem }));
-export const dsaService = { getDSASheet: async () => ({ topics: DSA_TOPICS, problems }), getDSAProblems: async () => problems, getDSAProblemById: async id => problems.find(problem => problem.id === id), updateProblemStatus: async (id, solved) => { problems = problems.map(problem => problem.id === id ? { ...problem, solved } : problem); return problems.find(problem => problem.id === id); }, toggleBookmark: async id => { problems = problems.map(problem => problem.id === id ? { ...problem, bookmarked: !problem.bookmarked } : problem); return problems.find(problem => problem.id === id); } };
+import { apiRequest } from './apiClient';
+export const dsaService = {
+  getDSASheet: async () => apiRequest('/dsa/sheet'),
+  getDSAProblems: async () => apiRequest('/dsa/problems'),
+  getDSAProblemById: async id => apiRequest(`/dsa/problems/${id}`),
+  updateProblemStatus: async (id, solved) => apiRequest(`/dsa/problems/${id}/progress`, { method: 'PATCH', body: JSON.stringify({ solved }) }),
+  toggleBookmark: async id => {
+    const problem = await apiRequest(`/dsa/problems/${id}`);
+    return apiRequest(`/dsa/problems/${id}/progress`, { method: 'PATCH', body: JSON.stringify({ bookmarked: !problem.bookmarked }) });
+  },
+};

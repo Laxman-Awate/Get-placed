@@ -1,1 +1,1 @@
-import { STUDENT_PROFILE } from '../constants/profile'; export const profileService={getProfile:async()=>({...STUDENT_PROFILE}),updateProfile:async profile=>profile};
+import { apiRequest } from './apiClient'; export const profileService={getProfile:async()=>apiRequest('/profile'),updateProfile:async profile=>apiRequest('/profile',{method:'PUT',body:JSON.stringify(profile)})};
