@@ -1,4 +1,4 @@
-package com.placepro.dto.auth;
+package com.placepro.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,4 +15,7 @@ public class AuthResponse {
     private String name;
     private String pictureUrl;
     private String role;
+    private String provider;
+    private String plan;
+    private AuthUserDto user;
 }
