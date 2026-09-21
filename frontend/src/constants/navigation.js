@@ -1,4 +1,4 @@
-export const PUBLIC_NAVIGATION = [
+﻿export const PUBLIC_NAVIGATION = [
   { label: 'Home', path: '/', target: '#top' },
 ];
 
