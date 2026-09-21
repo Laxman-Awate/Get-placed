@@ -3,10 +3,12 @@ import { Arrow } from '../../components/common/Logo';
 import { LANDING_FEATURES } from '../../constants/landing';
 import { useCompanies } from '../../hooks/useCompanies';
 import { useAuth } from '../../context/AuthContext';
+import { useRoute } from '../../context/RouteContext';
 import heroVisual from '../../assets/placepro-dsa-student-hero.png';
 
 function LandingHero({ isAuthenticated }) {
-  const startLearning = () => { window.location.href = isAuthenticated ? '/learning' : '/login?from=%2Flearning'; };
+  const { navigate } = useRoute();
+  const startLearning = () => { navigate(isAuthenticated ? '/learning' : '/login?from=%2Flearning'); };
   return <section className="landing-hero"><div className="landing-hero-inner"><div className="landing-hero-content"><div className="landing-hero-eyebrow"><span className="pulse" /> LEARN · PRACTICE · PREPARE · GET PLACED</div><h1>Your placement <em>journey starts here.</em></h1><p className="landing-hero-description">Build the skills you need for placements with structured learning, focused practice, mock tests, and company-wise preparation — all in one place.</p><div className="landing-hero-actions"><button className="button" onClick={startLearning}>Start learning <Arrow /></button><button className="text-button" onClick={() => document.querySelector('#companies')?.scrollIntoView({ behavior: 'smooth' })}>Explore companies <Arrow /></button></div><div className="landing-hero-social-proof"><div className="avatar-stack"><i>R</i><i>A</i><i>M</i><i>+</i></div><span>Join 10,000+ students building their future</span></div></div><div className="landing-hero-visual"><img src={heroVisual} alt="Engineering student learning DSA and solving coding problems at a computer" /></div></div></section>;
 }
 

@@ -1,35 +1,39 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
+import { invalidate } from '../utils/cache';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-<<<<<<< HEAD
-  const [isAuthenticated, setAuthenticated] = useState(() => authService.isAuthenticated());
-=======
   const [isAuthenticated, setAuthenticated] = useState(() =>
     authService.isAuthenticated()
   );
 
->>>>>>> frontend
   const [user, setUser] = useState(() => authService.getUser());
 
   const value = useMemo(
     () => ({
       isAuthenticated,
       user,
-<<<<<<< HEAD
-=======
+<<<<<<< Updated upstream
 
->>>>>>> frontend
       login: async (userData = null) => {
         const res = await authService.login(userData);
+=======
+      token: authService.getToken(),
+      register: async (payload) => {
+        const res = await authService.register(payload);
         setUser(res.user);
         setAuthenticated(true);
         return res;
       },
-<<<<<<< HEAD
-=======
+      login: async (payload) => {
+        const res = await authService.login(payload);
+>>>>>>> Stashed changes
+        setUser(res.user);
+        setAuthenticated(true);
+        return res;
+      },
 
       register: async (userData) => {
         const res = await authService.register(userData);
@@ -38,19 +42,16 @@ export function AuthProvider({ children }) {
         return res;
       },
 
->>>>>>> frontend
       loginWithGoogle: async (credential) => {
         const res = await authService.loginWithGoogle(credential);
         setUser(res.user);
         setAuthenticated(true);
         return res;
       },
-<<<<<<< HEAD
-=======
 
->>>>>>> frontend
       logout: () => {
         authService.logout();
+        invalidate();
         setUser(null);
         setAuthenticated(false);
       },
@@ -58,25 +59,16 @@ export function AuthProvider({ children }) {
     [isAuthenticated, user]
   );
 
-<<<<<<< HEAD
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-=======
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
->>>>>>> frontend
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-<<<<<<< HEAD
-  if (!context) throw new Error('useAuth must be used inside AuthProvider');
-  return context;
-}
-
-=======
+<<<<<<< Updated upstream
 
   if (!context) {
     throw new Error('useAuth must be used inside AuthProvider');
@@ -84,4 +76,8 @@ export function useAuth() {
 
   return context;
 }
->>>>>>> frontend
+=======
+  if (!context) throw new Error('useAuth must be used inside AuthProvider');
+  return context;
+}
+>>>>>>> Stashed changes
