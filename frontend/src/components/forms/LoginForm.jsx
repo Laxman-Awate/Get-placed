@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { FormField } from '../common/FormField';
 import { useAuth } from '../../context/AuthContext';
+import { useRoute } from '../../context/RouteContext';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -9,6 +10,8 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const { login, loginWithGoogle } = useAuth();
+  const { path, navigate } = useRoute();
+  const destination = new URLSearchParams(path.split('?')[1] || '').get('from') || '/learning';
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -16,12 +19,16 @@ export function LoginForm() {
       setError('');
 
       await loginWithGoogle(credentialResponse.credential);
+<<<<<<< Updated upstream
 
       const destination =
         new URLSearchParams(window.location.search).get('from') ||
         '/learning';
 
       window.location.href = destination;
+=======
+      navigate(destination);
+>>>>>>> Stashed changes
     } catch {
       setError('Google login failed. Please try again.');
     } finally {
@@ -37,7 +44,7 @@ export function LoginForm() {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
-    const email = form.get('email');
+    const email = String(form.get('email') || '').trim();
     const password = form.get('password');
 
     if (!email || !password) {
@@ -47,6 +54,7 @@ export function LoginForm() {
 
     setError('');
     setLoading(true);
+<<<<<<< Updated upstream
 
     try {
       await login({ email, password });
@@ -60,6 +68,13 @@ export function LoginForm() {
       setError(
         err.message || 'Login failed. Please check your credentials.'
       );
+=======
+    try {
+      await login({ email, password });
+      navigate(destination);
+    } catch (err) {
+      setError(err.message || 'Invalid email or password.');
+>>>>>>> Stashed changes
     } finally {
       setLoading(false);
     }

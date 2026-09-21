@@ -2,11 +2,17 @@ import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { FormField } from '../common/FormField';
 import { useAuth } from '../../context/AuthContext';
+import { useRoute } from '../../context/RouteContext';
 
 export function SignupForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register, loginWithGoogle } = useAuth();
+<<<<<<< Updated upstream
+=======
+  const { path, navigate } = useRoute();
+  const destination = new URLSearchParams(path.split('?')[1] || '').get('from') || '/learning';
+>>>>>>> Stashed changes
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -14,12 +20,16 @@ export function SignupForm() {
       setError('');
 
       await loginWithGoogle(credentialResponse.credential);
+<<<<<<< Updated upstream
 
       const destination =
         new URLSearchParams(window.location.search).get('from') ||
         '/learning';
 
       window.location.href = destination;
+=======
+      navigate(destination);
+>>>>>>> Stashed changes
     } catch {
       setError('Google signup failed. Please try again.');
     } finally {
@@ -35,6 +45,7 @@ export function SignupForm() {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
+<<<<<<< Updated upstream
     const name = form.get('name');
     const email = form.get('email');
     const password = form.get('new-password');
@@ -42,6 +53,22 @@ export function SignupForm() {
 
     if (!name || !email || !password) {
       setError('Please fill in your name, email and password.');
+=======
+    const name = String(form.get('name') || '').trim();
+    const email = String(form.get('email') || '').trim();
+    const password = String(form.get('new-password') || '');
+    const confirm = String(form.get('confirm-password') || '');
+    if (!name || !email || !password) {
+      setError('Please fill in your name, email and password.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+>>>>>>> Stashed changes
       return;
     }
 
@@ -52,6 +79,7 @@ export function SignupForm() {
 
     setError('');
     setLoading(true);
+<<<<<<< Updated upstream
 
     try {
       await register({ name, email, password });
@@ -63,6 +91,13 @@ export function SignupForm() {
       window.location.href = destination;
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.');
+=======
+    try {
+      await register({ name, email, password });
+      navigate(destination);
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+>>>>>>> Stashed changes
     } finally {
       setLoading(false);
     }

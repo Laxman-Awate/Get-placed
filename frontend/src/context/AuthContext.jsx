@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
+import { invalidate } from '../utils/cache';
 
 const AuthContext = createContext(null);
 
@@ -14,9 +15,21 @@ export function AuthProvider({ children }) {
     () => ({
       isAuthenticated,
       user,
+<<<<<<< Updated upstream
 
       login: async (userData = null) => {
         const res = await authService.login(userData);
+=======
+      token: authService.getToken(),
+      register: async (payload) => {
+        const res = await authService.register(payload);
+        setUser(res.user);
+        setAuthenticated(true);
+        return res;
+      },
+      login: async (payload) => {
+        const res = await authService.login(payload);
+>>>>>>> Stashed changes
         setUser(res.user);
         setAuthenticated(true);
         return res;
@@ -38,6 +51,7 @@ export function AuthProvider({ children }) {
 
       logout: () => {
         authService.logout();
+        invalidate();
         setUser(null);
         setAuthenticated(false);
       },
@@ -54,6 +68,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+<<<<<<< Updated upstream
 
   if (!context) {
     throw new Error('useAuth must be used inside AuthProvider');
@@ -61,3 +76,8 @@ export function useAuth() {
 
   return context;
 }
+=======
+  if (!context) throw new Error('useAuth must be used inside AuthProvider');
+  return context;
+}
+>>>>>>> Stashed changes
