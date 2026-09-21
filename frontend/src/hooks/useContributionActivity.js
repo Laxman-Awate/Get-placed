@@ -1,11 +1,4 @@
-<<<<<<< Updated upstream
-import { useEffect, useState } from 'react';
-import { apiRequest } from '../services/apiClient';
-import { buildContributionCalendar } from '../utils/contributionCalendar';
-
-export function useContributionActivity() { const [calendar,setCalendar]=useState(()=>buildContributionCalendar()); useEffect(()=>{apiRequest('/activity/calendar').then(activity=>setCalendar(buildContributionCalendar(new Date(),activity))).catch(()=>setCalendar(buildContributionCalendar(new Date(),{})))},[]); return calendar; }
-=======
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { buildContributionCalendarFromCounts } from '../utils/contributionCalendar';
 import { activityService } from '../services/activityService';
 
@@ -29,4 +22,3 @@ export function useContributionActivity() {
   const calendar = useMemo(() => buildContributionCalendarFromCounts(counts), [counts]);
   return { ...calendar, loading, error };
 }
->>>>>>> Stashed changes

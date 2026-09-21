@@ -1,7 +1,4 @@
-<<<<<<< Updated upstream
-import { apiRequest } from './apiClient'; export const readinessService={getReadiness:async()=>apiRequest('/readiness')};
-=======
-import { authService } from './authService';
+﻿import { authService } from './authService';
 import { cached, peek, TTL } from '../utils/cache';
 
 const KEY = 'readiness';
@@ -20,4 +17,3 @@ export const readinessService = {
   peekReadiness: () => peek(KEY),
   getReadiness: () => cached(KEY, TTL.READINESS, fetchReadiness),
 };
->>>>>>> Stashed changes

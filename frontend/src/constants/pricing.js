@@ -1,5 +1,5 @@
-export const PRICING_PLANS = [
-  { name: 'Free', eyebrow: 'BUILD YOUR FOUNDATION', price: '₹0', period: 'forever', description: 'Start learning with the essentials for placement preparation.', features: ['Semester-wise academic material', 'DSA fundamentals', 'Basic learning resources', 'Basic practice'], action: 'Start for free' },
-  { name: 'Starter', eyebrow: 'TRY A LITTLE DEEPER', price: '₹5', period: 'one-time', description: 'A focused company starter pack to help you explore your next target.', features: ['Company overview and process', 'Sample questions', 'Mini mock test', 'Starter preparation roadmap'], action: 'Explore starter', featured: true },
+﻿export const PRICING_PLANS = [
+  { name: 'Free', eyebrow: 'BUILD YOUR FOUNDATION', price: 'Γé╣0', period: 'forever', description: 'Start learning with the essentials for placement preparation.', features: ['Semester-wise academic material', 'DSA fundamentals', 'Basic learning resources', 'Basic practice'], action: 'Start for free' },
+  { name: 'Starter', eyebrow: 'TRY A LITTLE DEEPER', price: 'Γé╣5', period: 'one-time', description: 'A focused company starter pack to help you explore your next target.', features: ['Company overview and process', 'Sample questions', 'Mini mock test', 'Starter preparation roadmap'], action: 'Explore starter', featured: true },
   { name: 'Premium', eyebrow: 'THE COMPLETE JOURNEY', price: 'Configurable', period: 'monthly / yearly', description: 'Complete preparation for students ready to go further.', features: ['Complete aptitude preparation', 'Company-specific resources', 'Advanced practice and mock tests', 'Detailed preparation roadmap'], action: 'Explore premium' },
 ];

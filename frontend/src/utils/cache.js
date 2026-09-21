@@ -5,7 +5,7 @@
 const store = new Map();
 const inflight = new Map();
 
-export const TTL = { PROFILE: 60000, DASHBOARD: 30000, READINESS: 30000, CALENDAR: 60000 };
+export const TTL = { PROFILE: 60000, DASHBOARD: 30000, READINESS: 30000, CALENDAR: 60000, LEARNING: 60000 };
 
 export function peek(key) {
   const entry = store.get(key);

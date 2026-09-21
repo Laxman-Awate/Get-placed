@@ -1,7 +1,4 @@
-<<<<<<< Updated upstream
-import { apiRequest } from './apiClient'; export const profileService={getProfile:async()=>apiRequest('/profile'),updateProfile:async profile=>apiRequest('/profile',{method:'PUT',body:JSON.stringify(profile)})};
-=======
-import { authService } from './authService';
+﻿import { authService } from './authService';
 import { cached, invalidate, peek, TTL } from '../utils/cache';
 
 const KEY = 'profile';
@@ -63,4 +60,3 @@ export const profileService = {
     return cached(KEY, TTL.PROFILE, async () => data);
   },
 };
->>>>>>> Stashed changes

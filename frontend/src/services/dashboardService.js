@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-import { apiRequest } from './apiClient';
-export async function getDashboardData() { return apiRequest('/dashboard'); }
-=======
-import { authService } from './authService';
+﻿import { authService } from './authService';
 import { cached, peek, TTL } from '../utils/cache';
 
 const KEY = 'dashboard';
@@ -28,4 +24,3 @@ export function peekDashboard() {
 export async function getDashboardData() {
   return cached(KEY, TTL.DASHBOARD, fetchDashboard);
 }
->>>>>>> Stashed changes
