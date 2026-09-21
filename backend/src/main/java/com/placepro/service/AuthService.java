@@ -48,13 +48,13 @@ public class AuthService {
 
     public AuthResponse google(String idToken) {
         GoogleIdToken.Payload payload = googleAuthService.verifyToken(idToken);
-        if (payload == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid or expired Google token.");
-        }
-        String email = payload.getEmail();
+        String email = payload.getEmail().trim().toLowerCase();
         String name = (String) payload.get("name");
         String picture = (String) payload.get("picture");
-        return response(users.upsertGoogle(name != null ? name : email, email, picture));
+        if (name == null || name.isBlank()) {
+            name = email;
+        }
+        return response(users.upsertGoogle(name.trim(), email, picture));
     }
 
     private AuthResponse response(UserRepository.User user) {

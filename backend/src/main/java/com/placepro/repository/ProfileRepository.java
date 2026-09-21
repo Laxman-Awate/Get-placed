@@ -53,10 +53,19 @@ public class ProfileRepository {
                 insert into student_profiles (user_id, phone, location, college, degree, branch, graduation_year, semester, cgpa, target_role, preferred_locations, target_companies, skills)
                 values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb)
                 on conflict (user_id) do update set
-                  phone=excluded.phone, location=excluded.location, college=excluded.college, degree=excluded.degree,
-                  branch=excluded.branch, graduation_year=excluded.graduation_year, semester=excluded.semester,
-                  cgpa=excluded.cgpa, target_role=excluded.target_role, preferred_locations=excluded.preferred_locations,
-                  target_companies=excluded.target_companies, skills=excluded.skills, updated_at=now()
+                  phone=coalesce(excluded.phone, student_profiles.phone),
+                  location=coalesce(excluded.location, student_profiles.location),
+                  college=coalesce(excluded.college, student_profiles.college),
+                  degree=coalesce(excluded.degree, student_profiles.degree),
+                  branch=coalesce(excluded.branch, student_profiles.branch),
+                  graduation_year=coalesce(excluded.graduation_year, student_profiles.graduation_year),
+                  semester=coalesce(excluded.semester, student_profiles.semester),
+                  cgpa=coalesce(excluded.cgpa, student_profiles.cgpa),
+                  target_role=coalesce(excluded.target_role, student_profiles.target_role),
+                  preferred_locations=coalesce(excluded.preferred_locations, student_profiles.preferred_locations),
+                  target_companies=coalesce(excluded.target_companies, student_profiles.target_companies),
+                  skills=coalesce(excluded.skills, student_profiles.skills),
+                  updated_at=now()
                 """, userId, profile.get("phone"), profile.get("location"), profile.get("college"), profile.get("degree"),
                 profile.get("branch"), profile.get("graduationYear"), profile.get("semester"), profile.get("cgpa"),
                 profile.get("role"), profile.get("locations"), toJson(profile.get("companies")), toJson(profile.get("skills")));
