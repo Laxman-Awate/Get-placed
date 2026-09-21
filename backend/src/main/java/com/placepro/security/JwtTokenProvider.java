@@ -23,8 +23,13 @@ public class JwtTokenProvider {
     private long jwtExpirationInMs;
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Invalid jwt.secret: must be Base64-encoded with at least 256 bits (32 bytes). Generate with: openssl rand -base64 32", e);
+        }
     }
 
     public String generateToken(String email, Map<String, Object> claims) {
