@@ -274,6 +274,72 @@ public class ContentRepository {
                 .done() : null, userId, testId);
     }
 
+    public void createMockTest(String id, String title, String type, String category, String difficulty,
+                               int durationMinutes, boolean isFree, List<String> sections, int marksPerQuestion) {
+        jdbc.update("""
+                insert into mock_tests (id, title, type, category, difficulty, duration_minutes, is_free, sections, marks_per_question)
+                values (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                on conflict (id) do update set
+                  title = excluded.title,
+                  type = excluded.type,
+                  category = excluded.category,
+                  difficulty = excluded.difficulty,
+                  duration_minutes = excluded.duration_minutes,
+                  is_free = excluded.is_free,
+                  sections = excluded.sections,
+                  marks_per_question = excluded.marks_per_question
+                """, id, title, type, category, difficulty, durationMinutes, isFree, toJson(sections), marksPerQuestion);
+    }
+
+    public void insertMockTestQuestions(String testId, List<Map<String, Object>> questions) {
+        jdbc.update("delete from mock_test_questions where test_id = ?", testId);
+        int order = 1;
+        for (Map<String, Object> q : questions) {
+            String qId = (String) q.get("id");
+            if (qId == null || qId.isBlank()) {
+                qId = testId + "-q" + order;
+            }
+            String section = (String) q.getOrDefault("section", "General");
+            String topic = (String) q.getOrDefault("topic", "General");
+            String difficulty = (String) q.getOrDefault("difficulty", "MEDIUM");
+            String questionText = (String) q.getOrDefault("question", "");
+            Object optionsObj = q.get("options");
+            int correctAnswer = 0;
+            if (q.get("correctAnswer") instanceof Number num) {
+                correctAnswer = num.intValue();
+            }
+            String explanation = (String) q.getOrDefault("explanation", "");
+
+            jdbc.update("""
+                    insert into mock_test_questions (id, test_id, section, topic, difficulty, question, options, correct_answer, explanation, sort_order)
+                    values (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)
+                    """, qId, testId, section, topic, difficulty, questionText, toJson(optionsObj), correctAnswer, explanation, order++);
+        }
+    }
+
+    public void createCompany(String id, String name, String type, String difficulty, boolean premium, String description, List<String> areas, int modules) {
+        jdbc.update("""
+                insert into companies (id, name, type, difficulty, premium, description, areas, modules)
+                values (?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                on conflict (id) do update set
+                  name = excluded.name,
+                  type = excluded.type,
+                  difficulty = excluded.difficulty,
+                  premium = excluded.premium,
+                  description = excluded.description,
+                  areas = excluded.areas,
+                  modules = excluded.modules
+                """, id, name, type, difficulty, premium, description, toJson(areas), modules);
+    }
+
+    public List<Map<String, Object>> allCompanies() {
+        return jdbc.query("select id, name, type, difficulty, premium, description, areas::text as areas, modules from companies order by name",
+                (rs, rowNum) -> map().put("id", rs.getString("id")).put("name", rs.getString("name"))
+                        .put("type", rs.getString("type")).put("difficulty", rs.getString("difficulty"))
+                        .put("premium", rs.getBoolean("premium")).put("description", rs.getString("description"))
+                        .put("areas", jsonList(rs.getString("areas"))).put("modules", rs.getInt("modules")).done());
+    }
+
     private int aptitudeCategoryProgress(String categoryId, UUID userId) {
         if (userId == null) return 0;
         Integer value = jdbc.queryForObject("""

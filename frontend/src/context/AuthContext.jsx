@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
 import { invalidate } from '../utils/cache';
 
@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
     () => ({
       isAuthenticated,
       user,
+      isAdmin: Boolean(user?.role === 'ADMIN'),
       token: authService.getToken(),
       register: async (payload) => {
         const res = await authService.register(payload);
