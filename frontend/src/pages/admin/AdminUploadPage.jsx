@@ -26,6 +26,49 @@ export function AdminUploadPage() {
   const [newCompanyType, setNewCompanyType] = useState('Product');
   const [creatingCompany, setCreatingCompany] = useState(false);
 
+  // Pipeline animated progress states
+  const [pipelineStep, setPipelineStep] = useState(0);
+
+  const SAMPLE_QUESTIONS = `1. What is the worst-case time complexity of searching in a Hash Table with separate chaining?
+A) O(1)
+B) O(log n)
+C) O(n)
+D) O(n log n)
+Ans: C
+Explanation: In the worst case, all keys collide and hash into a single linked list bucket, degrading lookup to linear traversal O(n).
+
+2. Which tree traversal visits the root node before visiting both the left and right subtrees?
+A) Inorder
+B) Preorder
+C) Postorder
+D) Level-order
+Ans: B
+Explanation: Preorder traversal visits the root first, then left subtree, then right subtree (Root-Left-Right).
+
+3. Which of the following is NOT a necessary condition for a deadlock to occur in an operating system?
+A) Mutual Exclusion
+B) Hold and Wait
+C) Preemption Allowed
+D) Circular Wait
+Ans: C
+Explanation: The Coffman condition is "No Preemption". If preemption is allowed, deadlocks cannot occur.
+
+4. In SQL, which clause is used to filter groups created by the GROUP BY clause?
+A) WHERE
+B) HAVING
+C) ORDER BY
+D) LIMIT
+Ans: B
+Explanation: The HAVING clause was added to SQL because the WHERE clause cannot be used with aggregate functions.
+
+5. A train 240 meters long passes a pole in 24 seconds. What is the speed of the train in km/hr?
+A) 36 km/hr
+B) 40 km/hr
+C) 42 km/hr
+D) 48 km/hr
+Ans: A
+Explanation: Speed = 240m / 24s = 10 m/s. Converting to km/hr: 10 * (18 / 5) = 36 km/hr.`;
+
   useEffect(() => {
     adminService.getCompanies().then(setCompanies).catch(() => {});
   }, []);
@@ -34,10 +77,29 @@ export function AdminUploadPage() {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
+      setError('');
       if (!title) {
         const cleanName = selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
         setTitle(cleanName);
       }
+    }
+  };
+
+  const handleInsertSampleText = () => {
+    setRawText(SAMPLE_QUESTIONS);
+    setError('');
+    if (!title) {
+      setTitle('Placement Technical & Aptitude Assessment 2026');
+    }
+  };
+
+  const handleLoadSampleFile = () => {
+    const sampleBlob = new Blob([SAMPLE_QUESTIONS], { type: 'text/plain' });
+    const sampleFile = new File([sampleBlob], 'Placement_Assessment_Question_Bank_2026.txt', { type: 'text/plain' });
+    setFile(sampleFile);
+    setError('');
+    if (!title) {
+      setTitle('Placement Assessment Question Bank 2026');
     }
   };
 
@@ -63,25 +125,38 @@ export function AdminUploadPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Please provide a descriptive title.');
-      return;
+
+    // Auto-derive title if empty
+    let effectiveTitle = title.trim();
+    if (!effectiveTitle) {
+      if (file) {
+        effectiveTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      } else if (rawText.trim()) {
+        const firstLine = rawText.trim().split('\n')[0].replace(/^[#\d\.\-\s]+/, '').trim();
+        effectiveTitle = firstLine.slice(0, 50) || 'Placement Assessment Questions';
+      } else {
+        const comp = companies.find((c) => c.id === companyId);
+        effectiveTitle = comp ? `${comp.name} Assessment 2026` : `${category} Assessment 2026`;
+      }
+      setTitle(effectiveTitle);
     }
+
     if (uploadMode === 'file' && !file) {
-      setError('Please select a PDF or text file to upload.');
+      setError('Please select a file or click "Use Sample Placement Resource", or switch to the "Paste Raw Text" tab.');
       return;
     }
     if (uploadMode === 'text' && !rawText.trim()) {
-      setError('Please paste the question or note contents.');
+      setError('Please paste questions/notes or click "Insert Sample Question Bank" to test.');
       return;
     }
 
     try {
       setLoading(true);
       setError('');
+      setPipelineStep(1); // Step 1: Ingesting
 
       const formData = new FormData();
-      formData.append('title', title.trim());
+      formData.append('title', effectiveTitle);
       formData.append('resourceType', resourceType);
       formData.append('category', category);
       if (companyId) {
@@ -97,12 +172,27 @@ export function AdminUploadPage() {
         formData.append('rawText', rawText);
       }
 
-      await adminService.uploadResource(formData);
-      navigate('/admin/dashboard');
+      await new Promise((r) => setTimeout(r, 450));
+      setPipelineStep(2); // Step 2: Extracting
+
+      const result = await adminService.uploadResource(formData);
+
+      setPipelineStep(3); // Step 3: Compiling drafts
+      await new Promise((r) => setTimeout(r, 450));
+
+      setPipelineStep(4); // Step 4: Ready
+      await new Promise((r) => setTimeout(r, 350));
+
+      // Redirect immediately to Review Workbench to show output!
+      if (result && result.resourceId) {
+        navigate(`/admin/review/${result.resourceId}`);
+      } else {
+        navigate('/admin/dashboard');
+      }
     } catch (err) {
-      setError(err.message || 'Upload failed. Please check file format and try again.');
-    } finally {
+      setError(err.message || 'Extraction pipeline failed. Please verify format and try again.');
       setLoading(false);
+      setPipelineStep(0);
     }
   };
 
@@ -248,27 +338,50 @@ export function AdminUploadPage() {
                 {file ? file.name : 'Choose a PDF, TXT, or CSV file'}
               </div>
               <div className="admin-muted" style={{ fontSize: '0.85rem' }}>
-                {file ? `${(file.size / 1024).toFixed(1)} KB` : 'Supports PDF files up to 50MB'}
+                {file ? `${(file.size / 1024).toFixed(1)} KB` : 'Supports PDF, TXT, MD, CSV files up to 50MB'}
               </div>
-              <button
-                type="button"
-                className="button secondary sm mt-2"
-                onClick={() => document.getElementById('file-upload').click()}
-              >
-                Browse Files
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="button secondary sm"
+                  onClick={() => document.getElementById('file-upload').click()}
+                >
+                  Browse Files
+                </button>
+                <button
+                  type="button"
+                  className="button secondary sm"
+                  style={{ borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8' }}
+                  onClick={handleLoadSampleFile}
+                >
+                  ✨ Load Sample Placement Document
+                </button>
+              </div>
             </label>
           </div>
         ) : (
           <div className="admin-form-field">
-            <label htmlFor="raw-text">Paste Raw Document / Questions Text *</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label htmlFor="raw-text">Paste Raw Document / Questions Text *</label>
+              <button
+                type="button"
+                className="admin-link-btn"
+                style={{ fontSize: '0.82rem', fontWeight: 600, color: '#818cf8' }}
+                onClick={handleInsertSampleText}
+              >
+                ✨ Insert Sample Question Bank (5 Questions)
+              </button>
+            </div>
             <textarea
               id="raw-text"
               className="admin-textarea"
               rows={10}
-              placeholder="Paste text here, e.g.:&#10;1. What is the time complexity of QuickSort in the worst case?&#10;A) O(n)&#10;B) O(n log n)&#10;C) O(n^2)&#10;D) O(log n)&#10;Ans: C&#10;Explanation: When the pivot is the smallest or largest element..."
+              placeholder="Paste questions here, e.g.:&#10;1. What is the time complexity of QuickSort in the worst case?&#10;A) O(n)&#10;B) O(n log n)&#10;C) O(n^2)&#10;D) O(log n)&#10;Ans: C&#10;Explanation: When the pivot is the smallest or largest element..."
               value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
+              onChange={(e) => {
+                setRawText(e.target.value);
+                setError('');
+              }}
             />
           </div>
         )}
@@ -319,6 +432,14 @@ export function AdminUploadPage() {
           </div>
         </div>
 
+        {/* Inline Bottom Error Banner (always visible right above submit) */}
+        {error && (
+          <div className="admin-alert-error" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }} role="alert">
+            <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+            <div style={{ flex: 1 }}>{error}</div>
+          </div>
+        )}
+
         {/* Submit */}
         <div className="admin-form-footer">
           <button
@@ -333,10 +454,70 @@ export function AdminUploadPage() {
             className="button primary"
             disabled={loading}
           >
-            {loading ? 'Uploading & Starting Extraction…' : '🚀 Start Extraction Pipeline'}
+            {loading ? 'Processing Extraction Pipeline…' : '🚀 Start Extraction Pipeline'}
           </button>
         </div>
       </form>
+
+      {/* Animated Extraction Pipeline Progress Overlay */}
+      {loading && (
+        <div className="admin-pipeline-overlay">
+          <div className="admin-pipeline-modal">
+            <div className="admin-pipeline-header">
+              <div className="admin-pulse-icon">⚡</div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Automated Extraction Pipeline Active</h3>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+                  Structuring questions, options, answer keys and generating placement test artifacts...
+                </p>
+              </div>
+            </div>
+
+            <div className="admin-pipeline-steps">
+              <div className={`admin-pipeline-step ${pipelineStep >= 1 ? 'active' : ''} ${pipelineStep > 1 ? 'completed' : ''}`}>
+                <div className="step-circle">{pipelineStep > 1 ? '✓' : '1'}</div>
+                <div className="step-text">
+                  <strong>Ingest &amp; Decode Document</strong>
+                  <small>Reading text buffers and extracting question streams</small>
+                </div>
+              </div>
+
+              <div className={`admin-pipeline-step ${pipelineStep >= 2 ? 'active' : ''} ${pipelineStep > 2 ? 'completed' : ''}`}>
+                <div className="step-circle">{pipelineStep > 2 ? '✓' : '2'}</div>
+                <div className="step-text">
+                  <strong>Question &amp; Key Extraction</strong>
+                  <small>Parsing prompts, options A/B/C/D, explanations, and verifying answers</small>
+                </div>
+              </div>
+
+              <div className={`admin-pipeline-step ${pipelineStep >= 3 ? 'active' : ''} ${pipelineStep > 3 ? 'completed' : ''}`}>
+                <div className="step-circle">{pipelineStep > 3 ? '✓' : '3'}</div>
+                <div className="step-text">
+                  <strong>Synthesize Assessment Drafts</strong>
+                  <small>Generating mock test, section weighting, and question taxonomy</small>
+                </div>
+              </div>
+
+              <div className={`admin-pipeline-step ${pipelineStep >= 4 ? 'active' : ''}`}>
+                <div className="step-circle">{pipelineStep >= 4 ? '✓' : '4'}</div>
+                <div className="step-text">
+                  <strong>Launching Review Workbench</strong>
+                  <small>Redirecting to interactive workbench for review and publishing</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-pipeline-bar-wrapper">
+              <div
+                className="admin-pipeline-bar-fill"
+                style={{
+                  width: pipelineStep === 1 ? '25%' : pipelineStep === 2 ? '55%' : pipelineStep === 3 ? '85%' : '100%',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for adding company */}
       {showCompanyModal && (

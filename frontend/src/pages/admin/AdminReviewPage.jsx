@@ -24,10 +24,10 @@ export function AdminReviewPage() {
   const [viewMode, setViewMode] = useState('edit'); // 'edit' or 'preview'
   const [activePreviewQ, setActivePreviewQ] = useState(0);
 
-  const loadResourceData = useCallback(async () => {
+  const loadResourceData = useCallback(async (isPolling = false) => {
     if (!resourceId) return;
     try {
-      setLoading(true);
+      if (!isPolling) setLoading(true);
       setError('');
       const data = await adminService.getResource(resourceId);
       setResource(data);
@@ -36,17 +36,21 @@ export function AdminReviewPage() {
       setDrafts(generatedList);
 
       if (generatedList.length > 0) {
-        const first = generatedList[0];
-        populateDraftState(first);
+        const target = generatedList[activeDraftIndex] || generatedList[0];
+        populateDraftState(target);
+      } else if (data.status === 'PARSING' || data.status === 'GENERATING') {
+        // Auto-poll in background until generation finishes
+        setTimeout(() => loadResourceData(true), 1500);
       }
     } catch (err) {
       setError(err.message || 'Failed to load resource for review.');
     } finally {
-      setLoading(false);
+      if (!isPolling) setLoading(false);
     }
-  }, [resourceId]);
+  }, [resourceId, activeDraftIndex]);
 
   const populateDraftState = (draft) => {
+    if (!draft) return;
     setDraftTitle(draft.title || '');
     const data = draft.data || {};
     setDurationMinutes(data.durationMinutes || 45);
@@ -199,6 +203,35 @@ export function AdminReviewPage() {
     );
   }
 
+  if (drafts.length === 0) {
+    return (
+      <div className="admin-portal-container" style={{ maxWidth: '850px' }}>
+        <button
+          className="button secondary sm"
+          onClick={() => navigate('/admin/dashboard')}
+          style={{ marginBottom: '0.75rem' }}
+        >
+          ← Back to Dashboard
+        </button>
+        <div className="admin-card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem' }}>
+          <div className="admin-pulse-icon" style={{ margin: '0 auto 1.5rem auto' }}>⚡</div>
+          <h2 style={{ margin: '0 0 0.5rem 0' }}>Extraction Pipeline In Progress</h2>
+          <p className="admin-muted" style={{ maxWidth: '520px', margin: '0 auto 1.75rem auto' }}>
+            The extraction engine is currently parsing <strong>{resource.title}</strong> and compiling structured questions. This page will update automatically.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <button className="button primary sm" onClick={() => loadResourceData(false)}>
+              🔄 Check Status Now
+            </button>
+            <button className="button secondary sm" onClick={() => navigate('/admin/dashboard')}>
+              Back to Resources
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const currentDraft = drafts[activeDraftIndex];
 
   return (
@@ -224,7 +257,7 @@ export function AdminReviewPage() {
           </p>
         </div>
 
-        {/* View Mode Switcher */}
+        {/* Top Actions & View Mode Switcher */}
         <div className="admin-actions-group">
           <div className="admin-toggle-bar">
             <button
@@ -240,6 +273,48 @@ export function AdminReviewPage() {
               👁 Student Preview
             </button>
           </div>
+
+          <button
+            type="button"
+            className="button secondary sm"
+            disabled={saving || publishing}
+            onClick={handleSaveDraft}
+          >
+            {saving ? 'Saving…' : '💾 Save Draft'}
+          </button>
+
+          <button
+            type="button"
+            className="button primary sm"
+            disabled={saving || publishing}
+            onClick={handleApproveAndPublish}
+          >
+            {publishing ? 'Publishing…' : '🚀 Approve & Publish to Platform'}
+          </button>
+        </div>
+      </div>
+
+      {/* Prominent Review & Publish Action Banner */}
+      <div className="admin-review-callout">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="admin-pulse-icon" style={{ width: '42px', height: '42px', fontSize: '1.25rem' }}>⚡</div>
+          <div style={{ flex: 1, minWidth: '240px' }}>
+            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.05rem', color: '#f8fafc' }}>
+              Extraction Pipeline Succeeded — Ready for Review &amp; Publishing
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+              Review the structured questions, options, and verified answer keys below. Click <strong>Approve &amp; Publish to Platform</strong> to make this assessment immediately visible to students.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="button primary"
+            style={{ padding: '0.65rem 1.25rem', fontSize: '0.92rem', boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)' }}
+            disabled={saving || publishing}
+            onClick={handleApproveAndPublish}
+          >
+            {publishing ? 'Publishing…' : '🚀 Approve & Publish to Platform'}
+          </button>
         </div>
       </div>
 

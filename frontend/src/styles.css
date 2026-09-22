@@ -565,11 +565,21 @@ html[data-theme="light"] .dsa-problem-list{background:#f8faff}
   color: var(--text-secondary, #94a3b8);
 }
 
+/* Review & Publish Banner Callout */
+.admin-review-callout {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
 /* Sticky Footer */
 .admin-sticky-footer {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 244px;
   right: 0;
   background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(12px);
@@ -580,6 +590,11 @@ html[data-theme="light"] .dsa-problem-list{background:#f8faff}
   align-items: center;
   z-index: 100;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 900px) {
+  .admin-sticky-footer {
+    left: 0;
+  }
 }
 .admin-footer-status {
   font-size: 0.9rem;
@@ -852,4 +867,120 @@ html[data-theme="light"] .dsa-problem-list{background:#f8faff}
   border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
   padding-top: 0.75rem;
 }
+
+/* ==========================================================================
+   Extraction Pipeline Overlay & Progress Animation
+   ========================================================================== */
+.admin-pipeline-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 30, 0.82);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1.5rem;
+  animation: adminFadeIn 0.25s ease-out;
+}
+@keyframes adminFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+.admin-pipeline-modal {
+  background: #1e293b;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 16px;
+  padding: 2.25rem;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15);
+}
+.admin-pipeline-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.admin-pulse-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  animation: adminPulse 1.5s infinite;
+}
+.admin-pipeline-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.admin-pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+.admin-pipeline-step.active {
+  opacity: 1;
+}
+.admin-pipeline-step.completed {
+  opacity: 0.9;
+}
+.admin-pipeline-step .step-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.6);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.admin-pipeline-step.active .step-circle {
+  border-color: #6366f1;
+  color: #fff;
+  background: #6366f1;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
+.admin-pipeline-step.completed .step-circle {
+  border-color: #22c55e;
+  background: #22c55e;
+  color: #fff;
+}
+.admin-pipeline-step .step-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-primary, #f8fafc);
+}
+.admin-pipeline-step .step-text small {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: 0.15rem;
+}
+.admin-pipeline-bar-wrapper {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.admin-pipeline-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #38bdf8, #22c55e);
+  border-radius: 999px;
+  transition: width 0.4s ease-out;
+}
+
 

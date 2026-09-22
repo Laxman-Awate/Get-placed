@@ -275,22 +275,13 @@ export function AdminDashboardPage() {
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className="admin-row-actions">
-                        {res.status === 'REVIEW' && (
-                          <button
-                            className="button sm"
-                            onClick={() => navigate(`/admin/review/${res.id}`)}
-                          >
-                            Review &amp; Publish →
-                          </button>
-                        )}
-                        {res.status === 'PUBLISHED' && (
-                          <button
-                            className="button secondary sm"
-                            onClick={() => navigate(`/admin/review/${res.id}`)}
-                          >
-                            View Draft
-                          </button>
-                        )}
+                        <button
+                          className="button sm"
+                          onClick={() => navigate(`/admin/review/${res.id}`)}
+                          style={{ whiteSpace: 'nowrap' }}
+                        >
+                          {res.status === 'PUBLISHED' ? 'View Published Test →' : 'Review & Publish →'}
+                        </button>
                         <button
                           className="button icon-btn"
                           title="Reprocess with LLM"
