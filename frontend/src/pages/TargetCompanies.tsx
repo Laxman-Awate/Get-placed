@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Zap, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const companies = [
   { name: 'Google', logo: '🔍', type: 'Product', package: '25-50 LPA', color: 'from-blue-500 to-green-500' },
@@ -25,11 +26,8 @@ export default function TargetCompanies() {
   return (
     <div className="min-h-screen bg-[#080810] flex items-center justify-center p-8">
       <div className="w-full max-w-2xl">
-        <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
-            <Zap size={15} className="text-white" />
-          </div>
-          <span className="font-bold text-white font-[Plus_Jakarta_Sans]">LevelUp</span>
+        <div className="mb-8">
+          <Logo size="md" to="/" />
         </div>
 
         {/* Progress */}
