@@ -55,7 +55,7 @@ export default function Landing() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/register" className="text-sm text-[#94a3b8] hover:text-white transition-colors px-3 py-1.5">Login</Link>
+          <Link to="/login" className="text-sm text-[#94a3b8] hover:text-white transition-colors px-3 py-1.5">Login</Link>
           <button
             onClick={() => navigate('/register')}
             className="text-sm font-semibold bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-lg transition-all shadow-lg shadow-teal-500/20"
@@ -76,9 +76,14 @@ export default function Landing() {
             {['Home', ...navLinks].map(item => (
               <a key={item} href="#" className="block text-base text-[#94a3b8] py-2 border-b border-[#1e1e30]">{item}</a>
             ))}
-            <button onClick={() => navigate('/register')} className="w-full bg-teal-500 text-white font-semibold py-3 rounded-xl mt-4">
-              Get Started →
-            </button>
+            <div className="pt-2 flex flex-col gap-2">
+              <Link to="/login" className="w-full text-center py-2.5 rounded-xl border border-[#1e1e30] text-sm text-[#94a3b8]">
+                Log In
+              </Link>
+              <button onClick={() => navigate('/register')} className="w-full bg-teal-500 text-white font-semibold py-3 rounded-xl">
+                Get Started →
+              </button>
+            </div>
           </div>
         </div>
       )}

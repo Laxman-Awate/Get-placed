@@ -3,6 +3,7 @@ import {
   LayoutDashboard, BookOpen, FlaskConical, Code2, ClipboardList,
   Building2, MessageSquare, FileText, Settings, Zap, LogOut, Map
 } from 'lucide-react';
+import { authService } from '../services/authService';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -19,6 +20,10 @@ const navItems = [
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const user = authService.getUser() || { name: 'Arjun Kumar', email: 'arjun.kumar@gmail.com' };
+  const initials = user.name
+    ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'A';
 
   return (
     <div className="flex h-screen bg-[#080810] overflow-hidden">
@@ -59,15 +64,20 @@ export default function DashboardLayout() {
         {/* Bottom */}
         <div className="p-3 border-t border-[#1e1e30]">
           <div className="flex items-center gap-2.5 px-2 py-2 mb-1">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">A</div>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
+              {initials}
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-white truncate">Arjun Kumar</div>
-              <div className="text-[10px] text-[#64748b] truncate">B.Tech CSE · 2025</div>
+              <div className="text-xs font-medium text-white truncate">{user.name}</div>
+              <div className="text-[10px] text-[#64748b] truncate">{user.email}</div>
             </div>
           </div>
           <button
-            onClick={() => navigate('/')}
-            className="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[#64748b] hover:text-red-400"
+            onClick={() => {
+              authService.logout();
+              navigate('/login');
+            }}
+            className="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[#64748b] hover:text-red-400 cursor-pointer"
           >
             <LogOut size={15} />
             <span>Logout</span>

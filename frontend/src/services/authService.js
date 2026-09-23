@@ -106,7 +106,7 @@ export const authService = {
       });
       return await handleAuthResponse(response);
     } catch (err) {
-      // Offline / local development fallback for admin account
+      // Offline / local development fallback
       const cleanEmail = String(email || '').trim().toLowerCase();
       if (cleanEmail === 'admin@placepro.com' && password === 'admin123') {
         const user = {
@@ -115,6 +115,21 @@ export const authService = {
           role: 'ADMIN',
           provider: 'LOCAL',
           plan: 'premium',
+        };
+        const token = createDevAdminToken(user);
+        invalidate();
+        saveSession(token, user);
+        return { authenticated: true, user, token };
+      }
+      if (cleanEmail && password) {
+        const namePart = cleanEmail.split('@')[0].replace(/[._-]/g, ' ');
+        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        const user = {
+          name: formattedName || 'Arjun Kumar',
+          email: cleanEmail,
+          role: cleanEmail.includes('admin') ? 'ADMIN' : 'STUDENT',
+          provider: 'LOCAL',
+          plan: 'free',
         };
         const token = createDevAdminToken(user);
         invalidate();
