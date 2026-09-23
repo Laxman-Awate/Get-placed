@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router';
 import { Zap, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { authService } from '../services/authService';
+import Logo from '../components/Logo';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -105,12 +106,9 @@ export default function Register() {
       {/* Left panel */}
       <div className="hidden lg:flex flex-col justify-between w-[440px] bg-[#0a0a14] border-r border-[#1e1e30] p-10">
         <div>
-          <Link to="/" className="flex items-center gap-2.5 mb-10 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform">
-              <Zap size={18} className="text-white" />
-            </div>
-            <span className="font-bold text-white text-xl font-[Plus_Jakarta_Sans]">LevelUp</span>
-          </Link>
+          <div className="mb-10">
+            <Logo size="lg" to="/" />
+          </div>
 
           <h2 className="text-2xl font-bold font-[Plus_Jakarta_Sans] text-white mb-3">
             {isLogin ? 'Welcome back to your preparation journey' : 'Your placement success starts here'}
@@ -182,11 +180,8 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
-          <div className="flex lg:hidden items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <Zap size={16} className="text-white" />
-            </div>
-            <span className="font-bold text-white text-lg font-[Plus_Jakarta_Sans]">LevelUp</span>
+          <div className="lg:hidden mb-6">
+            <Logo size="md" to="/" />
           </div>
 
           {/* Mode Switcher Tabs */}

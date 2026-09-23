@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Zap, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const skills = ['JavaScript', 'Python', 'Java', 'C++', 'React', 'Node.js', 'SQL', 'Machine Learning', 'Data Structures', 'Algorithms', 'System Design', 'AWS'];
 const branches = ['Computer Science', 'Information Technology', 'Electronics', 'Electrical', 'Mechanical', 'Civil', 'Other'];
@@ -21,11 +22,8 @@ export default function ProfileSetup() {
     <div className="min-h-screen bg-[#080810] flex items-center justify-center p-8">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
-            <Zap size={15} className="text-white" />
-          </div>
-          <span className="font-bold text-white font-[Plus_Jakarta_Sans]">LevelUp</span>
+        <div className="mb-8">
+          <Logo size="md" to="/" />
         </div>
 
         {/* Progress */}

@@ -31,12 +31,14 @@ export default function DashboardLayout() {
       <aside className="w-[220px] flex-shrink-0 flex flex-col border-r border-[#1e1e30] bg-[#0a0a14]">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[#1e1e30]">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
-            <Zap size={16} className="text-white" />
+          <div className="w-8 h-8 rounded-xl bg-[#0f0f1a] border border-[#1e1e30] flex items-center justify-center p-1 shadow-md shadow-teal-500/10">
+            <img src="/logo-icon.png" alt="LevelUp Logo" className="w-full h-full object-contain filter drop-shadow-[0_2px_6px_rgba(20,184,166,0.3)]" />
           </div>
           <div>
-            <span className="font-bold text-white text-sm font-[Plus_Jakarta_Sans]">LevelUp</span>
-            <div className="text-[10px] text-teal-400 font-medium leading-none mt-0.5">PLACEMENT PRO</div>
+            <span className="font-extrabold text-white text-sm font-[Plus_Jakarta_Sans] tracking-tight">
+              Level<span className="text-[#38bdf8]">Up</span>
+            </span>
+            <div className="text-[10px] text-teal-400 font-semibold tracking-wider leading-none mt-0.5">PLACEMENT PRO</div>
           </div>
         </div>
 

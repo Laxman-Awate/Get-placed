@@ -5,6 +5,7 @@ import {
   Users, FileText, Star, ArrowRight, CheckCircle, Sparkles, TrendingUp, Target,
   Menu, X
 } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const features = [
   { icon: Brain, title: 'Aptitude Mastery', desc: 'Quantitative, logical & verbal with 5000+ questions', color: 'from-teal-500 to-cyan-400' },
@@ -40,12 +41,7 @@ export default function Landing() {
     <div className="min-h-screen bg-[#080810] text-[#f1f5f9] overflow-x-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-8 py-4 border-b border-[#1e1e30] bg-[#080810]/90 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <Zap size={15} className="text-white" />
-          </div>
-          <span className="font-bold text-white text-lg font-[Plus_Jakarta_Sans]">LevelUp</span>
-        </div>
+        <Logo size="md" to="/" />
 
         <div className="hidden md:flex items-center gap-5 text-sm text-[#64748b]">
           <a href="#" className="text-teal-400 font-medium">Home</a>
@@ -293,8 +289,8 @@ export default function Landing() {
           <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-purple-500/5" />
           <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-teal-500/5 blur-2xl" />
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-teal-500/20">
-              <Zap size={24} className="text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-[#0f0f1a] border border-[#1e1e30] flex items-center justify-center mx-auto mb-5 p-2.5 shadow-xl shadow-teal-500/20">
+              <img src="/logo-icon.png" alt="LevelUp Logo" className="w-full h-full object-contain filter drop-shadow-[0_2px_12px_rgba(20,184,166,0.3)]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold font-[Plus_Jakarta_Sans] mb-3">Ready to Get Placed?</h2>
             <p className="text-[#64748b] mb-8 text-sm">Join 50,000+ students who leveled up their careers with LevelUp. Start free, no card needed.</p>
@@ -311,12 +307,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-[#1e1e30] py-10 px-8">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
-              <Zap size={13} className="text-white" />
-            </div>
-            <span className="font-bold text-white font-[Plus_Jakarta_Sans]">LevelUp</span>
-          </div>
+          <Logo size="sm" to="/" />
           <div className="text-xs text-[#475569]">Learn. Practice. Level Up. Get Placed.</div>
           <div className="text-xs text-[#475569]">© 2025 LevelUp · All rights reserved</div>
         </div>
