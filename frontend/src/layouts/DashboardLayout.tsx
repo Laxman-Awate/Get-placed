@@ -1,0 +1,84 @@
+import { Outlet, NavLink, useNavigate } from 'react-router';
+import {
+  LayoutDashboard, BookOpen, FlaskConical, Code2, ClipboardList,
+  Building2, MessageSquare, FileText, Settings, Zap, LogOut, Map
+} from 'lucide-react';
+
+const navItems = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/dashboard/learn', icon: BookOpen, label: 'Learn' },
+  { to: '/dashboard/practice', icon: FlaskConical, label: 'Practice' },
+  { to: '/dashboard/coding', icon: Code2, label: 'Coding' },
+  { to: '/dashboard/mock-test', icon: ClipboardList, label: 'Mock Tests' },
+  { to: '/dashboard/company-prep', icon: Building2, label: 'Companies' },
+  { to: '/dashboard/interviews', icon: MessageSquare, label: 'Interviews' },
+  { to: '/dashboard/resume', icon: FileText, label: 'Resume' },
+  { to: '/dashboard/roadmap', icon: Map, label: 'Roadmap' },
+  { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
+];
+
+export default function DashboardLayout() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex h-screen bg-[#080810] overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-[220px] flex-shrink-0 flex flex-col border-r border-[#1e1e30] bg-[#0a0a14]">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[#1e1e30]">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+            <Zap size={16} className="text-white" />
+          </div>
+          <div>
+            <span className="font-bold text-white text-sm font-[Plus_Jakarta_Sans]">LevelUp</span>
+            <div className="text-[10px] text-teal-400 font-medium leading-none mt-0.5">PLACEMENT PRO</div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 hide-scrollbar">
+          {navItems.map(({ to, icon: Icon, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm cursor-pointer ${
+                  isActive
+                    ? 'active text-teal-400 font-medium'
+                    : 'text-[#64748b] hover:text-[#94a3b8]'
+                }`
+              }
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Bottom */}
+        <div className="p-3 border-t border-[#1e1e30]">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">A</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-white truncate">Arjun Kumar</div>
+              <div className="text-[10px] text-[#64748b] truncate">B.Tech CSE · 2025</div>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[#64748b] hover:text-red-400"
+          >
+            <LogOut size={15} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
