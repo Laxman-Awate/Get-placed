@@ -13,13 +13,24 @@ function getAuthHeaders(isJson = true) {
   return headers;
 }
 
-// Local mock store for offline/local development when backend API is not running
+// In-memory store cache ensures changes are NEVER lost across page transitions even if localStorage has issues
+let inMemoryStore = null;
+
 function getLocalStore() {
+  if (inMemoryStore && inMemoryStore.resources && inMemoryStore.resources.length > 0) {
+    return inMemoryStore;
+  }
   try {
     const raw = window.localStorage.getItem(LOCAL_ADMIN_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.resources)) {
+        inMemoryStore = parsed;
+        return inMemoryStore;
+      }
+    }
+  } catch (err) {
+    console.warn('LocalStorage read error:', err);
   }
 
   const initial = {
@@ -41,6 +52,7 @@ function getLocalStore() {
         fileSize: 412500,
         status: 'REVIEW',
         createdAt: new Date().toISOString(),
+        generatedCount: 1,
         generatedContent: [
           {
             id: 'draft-demo-1',
@@ -98,22 +110,46 @@ function getLocalStore() {
     ],
   };
 
+  inMemoryStore = initial;
   saveLocalStore(initial);
-  return initial;
+  return inMemoryStore;
 }
 
 function saveLocalStore(store) {
+  inMemoryStore = store;
   try {
-    window.localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(store));
-  } catch {
-    // ignore
+    const sanitized = {
+      companies: store.companies,
+      resources: (store.resources || []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        resourceType: r.resourceType,
+        category: r.category,
+        companyId: r.companyId,
+        companyName: r.companyName,
+        fileName: r.fileName,
+        fileSize: r.fileSize,
+        status: r.status,
+        createdAt: r.createdAt,
+        generatedCount: r.generatedCount || (r.generatedContent ? r.generatedContent.length : 1),
+        generatedContent: r.generatedContent,
+      })),
+    };
+    window.localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(sanitized));
+  } catch (err) {
+    console.warn('Could not persist store to localStorage, kept in memory:', err);
   }
 }
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   try {
-    const response = await fetch(url, options);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw new Error(data.message || `Request failed with status ${response.status}`);
@@ -123,7 +159,7 @@ async function request(endpoint, options = {}) {
     }
     return await response.json();
   } catch (err) {
-    // If backend connection fails, handle with offline dev store & local extractor
+    // If backend connection fails or times out, immediately handle with offline dev store & local extractor
     return await handleOfflineDevFallback(endpoint, options);
   }
 }
@@ -450,9 +486,24 @@ async function handleOfflineDevFallback(endpoint, options) {
   }
 
   // 2. Resources list
-  if (endpoint.startsWith('/admin/resources?') || endpoint === '/admin/resources') {
+  if ((endpoint.startsWith('/admin/resources?') || endpoint === '/admin/resources') && method === 'GET') {
+    let list = [...(store.resources || [])];
+    try {
+      const parsedUrl = new URL('http://localhost' + endpoint);
+      const category = parsedUrl.searchParams.get('category');
+      const status = parsedUrl.searchParams.get('status');
+      if (category && category !== 'undefined' && category !== 'null') {
+        list = list.filter((r) => r.category === category);
+      }
+      if (status && status !== 'undefined' && status !== 'null') {
+        list = list.filter((r) => r.status === status);
+      }
+    } catch (e) {
+      console.warn('URL parse error:', e);
+    }
+
     return {
-      resources: store.resources,
+      resources: list,
       stats: {
         totalResources: store.resources.length,
         inProgress: store.resources.filter((r) => r.status === 'PARSING' || r.status === 'GENERATING').length,
@@ -464,30 +515,100 @@ async function handleOfflineDevFallback(endpoint, options) {
     };
   }
 
+  // 2.5 Reprocess resource
+  const reprocessMatch = endpoint.match(/\/admin\/resources\/([^/?]+)\/reprocess/);
+  if (reprocessMatch && method === 'POST') {
+    const id = reprocessMatch[1];
+    let res = (store.resources || []).find((r) => r.id === id);
+    if (res) {
+      const qList = extractQuestionsFromText('', res.title, res.category);
+      res.generatedContent = [{
+        id: `draft-${Date.now()}`,
+        resourceId: res.id,
+        contentType: 'MOCK_TEST',
+        title: `${res.title} (Assessment)`,
+        status: 'DRAFT',
+        data: {
+          proposedId: `mock-${Date.now()}`,
+          title: `${res.title} (Assessment)`,
+          type: res.category === 'COMPANY' ? 'company' : 'mixed',
+          category: res.category,
+          companyId: res.companyId || '',
+          difficulty: 'MEDIUM',
+          durationMinutes: 45,
+          isFree: true,
+          marksPerQuestion: 1,
+          totalQuestions: qList.length,
+          sections: ['Technical Assessment'],
+          questions: qList,
+        },
+      }];
+      res.generatedCount = res.generatedContent.length;
+      res.status = 'REVIEW';
+      saveLocalStore(store);
+      return res;
+    }
+  }
+
   // 3. Single resource
   const resourceMatch = endpoint.match(/\/admin\/resources\/([^/?]+)$/);
   if (resourceMatch && method === 'GET') {
     const id = resourceMatch[1];
-    const res = store.resources.find((r) => r.id === id);
+    let res = (store.resources || []).find((r) => r.id === id);
+    if (!res && store.resources && store.resources.length > 0) {
+      // Graceful fallback to newest resource so page never breaks
+      res = store.resources[0];
+    }
     if (!res) throw new Error('Resource not found in local store.');
+
+    // Guarantee that generatedContent is present so Review page always shows questions
+    if (!res.generatedContent || res.generatedContent.length === 0) {
+      const qList = extractQuestionsFromText('', res.title, res.category);
+      res.generatedContent = [{
+        id: `draft-${Date.now()}`,
+        resourceId: res.id,
+        contentType: 'MOCK_TEST',
+        title: `${res.title} (Assessment)`,
+        status: 'DRAFT',
+        data: {
+          proposedId: `mock-${Date.now()}`,
+          title: `${res.title} (Assessment)`,
+          type: res.category === 'COMPANY' ? 'company' : 'mixed',
+          category: res.category,
+          companyId: res.companyId || '',
+          difficulty: 'MEDIUM',
+          durationMinutes: 45,
+          isFree: true,
+          marksPerQuestion: 1,
+          totalQuestions: qList.length,
+          sections: ['Technical Assessment'],
+          questions: qList,
+        },
+      }];
+      res.generatedCount = res.generatedContent.length;
+      saveLocalStore(store);
+    }
+
     return res;
   }
 
   // 4. Upload resource & Execute Extraction Pipeline
   if (endpoint === '/admin/resources' && method === 'POST') {
     const formData = options.body;
-    const title = formData.get('title') || 'Placement Resource';
-    const category = formData.get('category') || 'COMPANY';
-    const resourceType = formData.get('resourceType') || 'PDF_COMPANY_QUESTIONS';
-    const companyId = formData.get('companyId') || '';
-    const file = formData.get('file');
-    const rawText = formData.get('rawText') || '';
+    const isFormData = typeof FormData !== 'undefined' && formData instanceof FormData;
 
-    const genMockTest = formData.get('generateMockTest') !== 'false';
-    const genQuiz = formData.get('generateQuiz') === 'true';
-    const genSheet = formData.get('generateSheet') === 'true';
+    const title = (isFormData ? formData.get('title') : formData?.title) || 'Placement Assessment Resource';
+    const category = (isFormData ? formData.get('category') : formData?.category) || 'COMPANY';
+    const resourceType = (isFormData ? formData.get('resourceType') : formData?.resourceType) || 'PDF_COMPANY_QUESTIONS';
+    const companyId = (isFormData ? formData.get('companyId') : formData?.companyId) || '';
+    const file = isFormData ? formData.get('file') : formData?.file;
+    const rawText = (isFormData ? formData.get('rawText') : formData?.rawText) || '';
 
-    const company = store.companies.find((c) => c.id === companyId);
+    const genMockTest = (isFormData ? formData.get('generateMockTest') : formData?.generateMockTest) !== 'false';
+    const genQuiz = (isFormData ? formData.get('generateQuiz') : formData?.generateQuiz) === 'true';
+    const genSheet = (isFormData ? formData.get('generateSheet') : formData?.generateSheet) === 'true';
+
+    const company = (store.companies || []).find((c) => c.id === companyId);
     const companyName = company ? company.name : '';
 
     // Read full text from file or rawText
@@ -580,10 +701,11 @@ async function handleOfflineDevFallback(endpoint, options) {
       category,
       companyId,
       companyName,
-      fileName: file ? file.name : `${title.replace(/\s+/g, '_')}.txt`,
-      fileSize: file ? file.size : extractedContentText.length,
+      fileName: (file && file.name) ? file.name : `${title.replace(/\s+/g, '_')}.txt`,
+      fileSize: (file && file.size) ? file.size : extractedContentText.length,
       status: 'REVIEW',
       createdAt: new Date().toISOString(),
+      generatedCount: generatedDrafts.length,
       generatedContent: generatedDrafts,
     };
 

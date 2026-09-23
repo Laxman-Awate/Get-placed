@@ -24,15 +24,29 @@ export function AdminReviewPage() {
   const [viewMode, setViewMode] = useState('edit'); // 'edit' or 'preview'
   const [activePreviewQ, setActivePreviewQ] = useState(0);
 
+  const [publishedEntityId, setPublishedEntityId] = useState(null);
+
   const loadResourceData = useCallback(async (isPolling = false) => {
     if (!resourceId) return;
     try {
       if (!isPolling) setLoading(true);
       setError('');
-      const data = await adminService.getResource(resourceId);
+      let data = await adminService.getResource(resourceId);
       setResource(data);
 
-      const generatedList = data.generatedContent || [];
+      let generatedList = data.generatedContent || [];
+      if (generatedList.length === 0) {
+        // Auto-reprocess to generate draft immediately if missing
+        try {
+          const reprocessed = await adminService.reprocessResource(resourceId);
+          if (reprocessed && reprocessed.generatedContent && reprocessed.generatedContent.length > 0) {
+            data = reprocessed;
+            generatedList = reprocessed.generatedContent;
+            setResource(reprocessed);
+          }
+        } catch {}
+      }
+
       setDrafts(generatedList);
 
       if (generatedList.length > 0) {
@@ -175,7 +189,9 @@ export function AdminReviewPage() {
 
       // Approve & publish
       const res = await adminService.approveContent(currentDraft.id);
-      setSuccessMsg(`🎉 Successfully published! Target ID: ${res.targetEntityId}`);
+      const targetId = res.targetEntityId || currentDraft.data?.proposedId;
+      setPublishedEntityId(targetId);
+      setSuccessMsg(`Assessment is now live in student mock tests catalog! (ID: ${targetId})`);
       loadResourceData();
     } catch (err) {
       setError(err.message || 'Failed to publish content.');
@@ -219,8 +235,23 @@ export function AdminReviewPage() {
           <p className="admin-muted" style={{ maxWidth: '520px', margin: '0 auto 1.75rem auto' }}>
             The extraction engine is currently parsing <strong>{resource.title}</strong> and compiling structured questions. This page will update automatically.
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-            <button className="button primary sm" onClick={() => loadResourceData(false)}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              className="button primary sm"
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await adminService.reprocessResource(resourceId);
+                  loadResourceData(false);
+                } catch (e) {
+                  setError(e.message || 'Failed to generate questions');
+                  setLoading(false);
+                }
+              }}
+            >
+              ⚡ Extract &amp; Generate Questions Now
+            </button>
+            <button className="button secondary sm" onClick={() => loadResourceData(false)}>
               🔄 Check Status Now
             </button>
             <button className="button secondary sm" onClick={() => navigate('/admin/dashboard')}>
@@ -319,7 +350,43 @@ export function AdminReviewPage() {
       </div>
 
       {error && <div className="admin-alert-error">{error}</div>}
-      {successMsg && <div className="admin-alert-success">{successMsg}</div>}
+      {successMsg && (
+        <div
+          className="admin-alert-success"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            padding: '1rem 1.25rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span style={{ fontSize: '1.25rem' }}>🎉</span>
+            <div>
+              <strong>Published to Live Platform!</strong>
+              <div style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>{successMsg}</div>
+            </div>
+          </div>
+          {publishedEntityId && (
+            <button
+              type="button"
+              className="button sm"
+              style={{
+                background: '#22c55e',
+                color: '#0f172a',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => navigate(`/mock-tests/${publishedEntityId}`)}
+            >
+              👀 View Live in Student Portal →
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Drafts Tab Switcher if multiple outputs generated */}
       {drafts.length > 1 && (

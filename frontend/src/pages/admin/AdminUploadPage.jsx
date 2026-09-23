@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminService } from '../../services/adminService';
 import { useRoute } from '../../context/RouteContext';
 
 export function AdminUploadPage() {
   const { navigate } = useRoute();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [companies, setCompanies] = useState([]);
@@ -14,6 +15,7 @@ export function AdminUploadPage() {
   const [category, setCategory] = useState('COMPANY');
   const [companyId, setCompanyId] = useState('');
   const [file, setFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
   const [rawText, setRawText] = useState('');
   const [uploadMode, setUploadMode] = useState('file'); // 'file' or 'text'
   const [generateMockTest, setGenerateMockTest] = useState(true);
@@ -73,15 +75,38 @@ Explanation: Speed = 240m / 24s = 10 m/s. Converting to km/hr: 10 * (18 / 5) = 3
     adminService.getCompanies().then(setCompanies).catch(() => {});
   }, []);
 
+  const handleSelectedFile = (selectedFile) => {
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    setError('');
+    if (!title) {
+      const cleanName = selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      setTitle(cleanName);
+    }
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      setError('');
-      if (!title) {
-        const cleanName = selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-        setTitle(cleanName);
-      }
+      handleSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleSelectedFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -96,11 +121,7 @@ Explanation: Speed = 240m / 24s = 10 m/s. Converting to km/hr: 10 * (18 / 5) = 3
   const handleLoadSampleFile = () => {
     const sampleBlob = new Blob([SAMPLE_QUESTIONS], { type: 'text/plain' });
     const sampleFile = new File([sampleBlob], 'Placement_Assessment_Question_Bank_2026.txt', { type: 'text/plain' });
-    setFile(sampleFile);
-    setError('');
-    if (!title) {
-      setTitle('Placement Assessment Question Bank 2026');
-    }
+    handleSelectedFile(sampleFile);
   };
 
   const handleCreateCompany = async (e) => {
@@ -191,6 +212,7 @@ Explanation: Speed = 240m / 24s = 10 m/s. Converting to km/hr: 10 * (18 / 5) = 3
       }
     } catch (err) {
       setError(err.message || 'Extraction pipeline failed. Please verify format and try again.');
+    } finally {
       setLoading(false);
       setPipelineStep(0);
     }
@@ -324,40 +346,109 @@ Explanation: Speed = 240m / 24s = 10 m/s. Converting to km/hr: 10 * (18 / 5) = 3
         </div>
 
         {uploadMode === 'file' ? (
-          <div className="admin-file-dropzone">
+          <div>
             <input
+              ref={fileInputRef}
               type="file"
               id="file-upload"
               accept=".pdf,.txt,.csv,.md,.json"
               onChange={handleFileChange}
               style={{ display: 'none' }}
             />
-            <label htmlFor="file-upload" className="admin-dropzone-label">
-              <span style={{ fontSize: '2.5rem' }}>📁</span>
-              <div style={{ fontWeight: 600, marginTop: '0.5rem' }}>
-                {file ? file.name : 'Choose a PDF, TXT, or CSV file'}
+            {file ? (
+              <div
+                style={{
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ fontSize: '2.2rem' }}>📄</div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary, #f8fafc)', fontSize: '1rem' }}>
+                      {file.name}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      <span>{(file.size / 1024).toFixed(1)} KB</span>
+                      <span style={{ color: '#22c55e', fontWeight: 600 }}>✓ File attached &amp; ready for extraction</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
+                  <button
+                    type="button"
+                    className="button secondary sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Change File
+                  </button>
+                  <button
+                    type="button"
+                    className="button danger sm icon-btn"
+                    title="Remove file"
+                    onClick={() => {
+                      setFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              <div className="admin-muted" style={{ fontSize: '0.85rem' }}>
-                {file ? `${(file.size / 1024).toFixed(1)} KB` : 'Supports PDF, TXT, MD, CSV files up to 50MB'}
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <button
-                  type="button"
-                  className="button secondary sm"
-                  onClick={() => document.getElementById('file-upload').click()}
+            ) : (
+              <div
+                className={`admin-file-dropzone ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                style={{
+                  border: dragActive ? '2px dashed #818cf8' : '2px dashed rgba(255, 255, 255, 0.15)',
+                  backgroundColor: dragActive ? 'rgba(99, 102, 241, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: '12px',
+                  padding: '2.5rem 1.5rem',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>📁</span>
+                <div style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary, #f8fafc)' }}>
+                  Drag &amp; drop a PDF, TXT, or CSV file here, or click to browse
+                </div>
+                <div className="admin-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                  Supports PDF question papers, notes, TXT, MD, CSV files up to 50MB
+                </div>
+                <div
+                  style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Browse Files
-                </button>
-                <button
-                  type="button"
-                  className="button secondary sm"
-                  style={{ borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8' }}
-                  onClick={handleLoadSampleFile}
-                >
-                  ✨ Load Sample Placement Document
-                </button>
+                  <button
+                    type="button"
+                    className="button secondary sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Browse Files
+                  </button>
+                  <button
+                    type="button"
+                    className="button secondary sm"
+                    style={{ borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8' }}
+                    onClick={handleLoadSampleFile}
+                  >
+                    ✨ Load Sample Placement Document
+                  </button>
+                </div>
               </div>
-            </label>
+            )}
           </div>
         ) : (
           <div className="admin-form-field">

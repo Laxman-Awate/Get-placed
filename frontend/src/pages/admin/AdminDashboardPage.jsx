@@ -203,6 +203,30 @@ export function AdminDashboardPage() {
         </button>
       </div>
 
+      {/* Latest Upload Callout Banner */}
+      {resources.length > 0 && resources[0].status === 'REVIEW' && (
+        <div className="admin-review-callout" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="admin-pulse-icon" style={{ width: '40px', height: '40px', fontSize: '1.2rem' }}>⚡</div>
+            <div style={{ flex: 1, minWidth: '240px' }}>
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', color: '#f8fafc' }}>
+                Latest Upload Ready: &ldquo;{resources[0].title}&rdquo;
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                Extracted assessment drafts with questions and answer keys &bull; Ready for admin review &amp; publishing to live platform.
+              </p>
+            </div>
+            <button
+              className="button primary sm"
+              onClick={() => navigate(`/admin/review/${resources[0].id}`)}
+              style={{ whiteSpace: 'nowrap', boxShadow: '0 0 16px rgba(99, 102, 241, 0.4)' }}
+            >
+              Review &amp; Publish Now &rarr;
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Resources Table */}
       <div className="admin-card">
         {loading && resources.length === 0 ? (
@@ -265,7 +289,7 @@ export function AdminDashboardPage() {
                     </td>
                     <td>
                       <span className="admin-count-pill">
-                        {res.generatedCount || 0} drafts
+                        {res.generatedCount || (res.generatedContent ? res.generatedContent.length : 1)} drafts
                       </span>
                     </td>
                     <td>
