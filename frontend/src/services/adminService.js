@@ -1,8 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+import { API_BASE_URL, getStoredToken } from './apiClient';
+
 const LOCAL_ADMIN_STORAGE_KEY = 'placepro.admin_local_store';
 
 function getAuthHeaders(isJson = true) {
-  const token = window.localStorage.getItem('placepro.token');
+  const token = getStoredToken();
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

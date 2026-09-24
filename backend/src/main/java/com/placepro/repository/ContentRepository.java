@@ -29,7 +29,11 @@ public class ContentRepository {
                 from dsa_problems p
                 left join user_dsa_progress up on up.problem_id=p.id and up.user_id=?
                 order by p.number
-                """, (rs, rowNum) -> map()
+                """, (rs, rowNum) -> mapDsaProblem(rs), userOrNil(userId));
+    }
+
+    private Map<String, Object> mapDsaProblem(java.sql.ResultSet rs) throws java.sql.SQLException {
+        return map()
                 .put("id", rs.getString("id"))
                 .put("number", rs.getInt("number"))
                 .put("title", rs.getString("title"))
@@ -41,11 +45,18 @@ public class ContentRepository {
                 .put("constraints", rs.getString("constraints"))
                 .put("solved", rs.getBoolean("solved"))
                 .put("bookmarked", rs.getBoolean("bookmarked"))
-                .done(), userOrNil(userId));
+                .done();
     }
 
     public Optional<Map<String, Object>> dsaProblem(String id, UUID userId) {
-        return dsaProblems(userId).stream().filter(p -> id.equals(p.get("id"))).findFirst();
+        return jdbc.query("""
+                select p.id,p.number,p.title,p.topic_id as "topicId",p.difficulty,p.pattern,p.description,
+                       p.examples::text as examples,p.constraints_text as constraints,
+                       coalesce(up.solved,false) as solved, coalesce(up.bookmarked,false) as bookmarked
+                from dsa_problems p
+                left join user_dsa_progress up on up.problem_id=p.id and up.user_id=?
+                where p.id=?
+                """, (rs, rowNum) -> mapDsaProblem(rs), userOrNil(userId), id).stream().findFirst();
     }
 
     public Map<String, Object> upsertDsaProgress(UUID userId, String id, Boolean solved, Boolean bookmarked) {
@@ -68,7 +79,11 @@ public class ContentRepository {
                 from coding_problems p
                 left join user_coding_progress up on up.problem_id=p.id and up.user_id=?
                 order by p.number
-                """, (rs, rowNum) -> map()
+                """, (rs, rowNum) -> mapCodingProblem(rs), userOrNil(userId));
+    }
+
+    private Map<String, Object> mapCodingProblem(java.sql.ResultSet rs) throws java.sql.SQLException {
+        return map()
                 .put("id", rs.getString("id"))
                 .put("number", rs.getInt("number"))
                 .put("title", rs.getString("title"))
@@ -83,11 +98,18 @@ public class ContentRepository {
                 .put("isFree", rs.getBoolean("is_free"))
                 .put("solved", rs.getBoolean("solved"))
                 .put("bookmarked", rs.getBoolean("bookmarked"))
-                .done(), userOrNil(userId));
+                .done();
     }
 
     public Optional<Map<String, Object>> codingProblem(String id, UUID userId) {
-        return codingProblems(userId).stream().filter(p -> id.equals(p.get("id"))).findFirst();
+        return jdbc.query("""
+                select p.*, p.constraints_json::text as constraints, p.examples::text as examples,
+                       p.hints::text as hints, p.starter_code::text as starter_code,
+                       coalesce(up.solved,false) as solved, coalesce(up.bookmarked,false) as bookmarked
+                from coding_problems p
+                left join user_coding_progress up on up.problem_id=p.id and up.user_id=?
+                where p.id=?
+                """, (rs, rowNum) -> mapCodingProblem(rs), userOrNil(userId), id).stream().findFirst();
     }
 
     public Map<String, Object> upsertCodingProgress(UUID userId, String id, Boolean solved, Boolean bookmarked) {
@@ -138,14 +160,18 @@ public class ContentRepository {
                 .done(), categoryId);
     }
 
+    /**
+     * Public question list. Never includes the answer key (correct answer or
+     * explanation) — grading happens server-side via {@link #submitAptitudeAttempt},
+     * which returns the result for the single attempted question.
+     */
     public List<Map<String, Object>> aptitudeQuestions(String topicId) {
         return jdbc.query("""
-                select id,topic_id,question,options::text,correct_answer,explanation,free,difficulty
+                select id,topic_id,question,options::text,free,difficulty
                 from aptitude_questions where topic_id=? order by id
                 """, (rs, rowNum) -> map()
                 .put("id", rs.getString("id")).put("topicId", rs.getString("topic_id"))
                 .put("question", rs.getString("question")).put("options", jsonList(rs.getString("options")))
-                .put("correctAnswer", rs.getInt("correct_answer")).put("explanation", rs.getString("explanation"))
                 .put("free", rs.getBoolean("free")).put("difficulty", rs.getString("difficulty")).done(), topicId);
     }
 
@@ -155,15 +181,24 @@ public class ContentRepository {
                 from companies c
                 left join user_company_progress up on up.company_id=c.id and up.user_id=?
                 order by c.name
-                """, (rs, rowNum) -> map().put("id", rs.getString("id")).put("name", rs.getString("name"))
+                """, (rs, rowNum) -> mapCompany(rs), userOrNil(userId));
+    }
+
+    private Map<String, Object> mapCompany(java.sql.ResultSet rs) throws java.sql.SQLException {
+        return map().put("id", rs.getString("id")).put("name", rs.getString("name"))
                 .put("type", rs.getString("type")).put("difficulty", rs.getString("difficulty"))
                 .put("premium", rs.getBoolean("premium")).put("description", rs.getString("description"))
                 .put("areas", jsonList(rs.getString("areas"))).put("modules", rs.getInt("modules"))
-                .put("bookmarked", rs.getBoolean("bookmarked")).done(), userOrNil(userId));
+                .put("bookmarked", rs.getBoolean("bookmarked")).done();
     }
 
     public Optional<Map<String, Object>> company(String id, UUID userId) {
-        return companies(userId).stream().filter(c -> id.equals(c.get("id"))).findFirst();
+        return jdbc.query("""
+                select c.*, coalesce(up.bookmarked,false) as bookmarked
+                from companies c
+                left join user_company_progress up on up.company_id=c.id and up.user_id=?
+                where c.id=?
+                """, (rs, rowNum) -> mapCompany(rs), userOrNil(userId), id).stream().findFirst();
     }
 
     public Map<String, Object> companyPreparation(String id, UUID userId) {
@@ -204,7 +239,170 @@ public class ContentRepository {
             dsaLessons.get(i).put("complete", i < 5);
             dsaLessons.get(i).put("current", i == 5);
         }
+        // Overlay real per-user progress when logged in.
+        if (userId != null) {
+            var done = new java.util.HashSet<>(jdbc.queryForList(
+                    "select content_type || ':' || content_id as k from user_learning_progress where user_id=? and complete=true",
+                    String.class, userId));
+            for (Map<String, Object> t : topics) {
+                String key = "topic:" + t.get("id");
+                if (done.contains(key)) t.put("complete", true);
+            }
+            for (Map<String, Object> l : dsaLessons) {
+                String key = "lesson:" + l.get("name");
+                if (done.contains(key)) l.put("complete", true);
+            }
+        }
         return map().put("semesters", semesters).put("subjects", subjects).put("topics", topics).put("dsaModules", dsaModules).put("dsaLessons", dsaLessons).done();
+    }
+
+    public Map<String, Object> upsertLearningProgress(UUID userId, String contentType, String contentId, boolean complete) {
+        jdbc.update("""
+                insert into user_learning_progress (user_id, content_type, content_id, complete)
+                values (?, ?, ?, ?)
+                on conflict (user_id, content_type, content_id) do update set complete=excluded.complete, updated_at=now()
+                """, userId, contentType, contentId, complete);
+        logActivity(userId, "📘", "Learning progress", contentType + " " + contentId, "blue");
+        return Map.of("contentType", contentType, "contentId", contentId, "complete", complete);
+    }
+
+    public Map<String, Object> submitAptitudeAttempt(UUID userId, String questionId, Integer selectedAnswer) {
+        Map<String, Object> row;
+        try {
+            row = jdbc.queryForMap(
+                    "select correct_answer, explanation from aptitude_questions where id=?", questionId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            throw new com.placepro.exception.ApiException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Aptitude question not found.");
+        }
+        int correctAnswer = ((Number) row.get("correct_answer")).intValue();
+        String explanation = (String) row.get("explanation");
+        boolean correct = selectedAnswer != null && selectedAnswer == correctAnswer;
+        jdbc.update("""
+                insert into user_aptitude_progress (user_id, question_id, selected_answer, correct)
+                values (?, ?, ?, ?)
+                on conflict (user_id, question_id) do update set selected_answer=excluded.selected_answer, correct=excluded.correct, attempted_at=now()
+                """, userId, questionId, selectedAnswer, correct);
+        logActivity(userId, "🧠", "Aptitude practiced", correct ? "Correct answer" : "Attempt recorded", correct ? "green" : "orange");
+        return map().put("questionId", questionId).put("correct", correct)
+                .put("correctAnswer", correctAnswer).put("explanation", explanation == null ? "" : explanation).done();
+    }
+
+    public Map<String, Object> aptitudeStats(UUID userId) {
+        List<Map<String, Object>> categories = aptitudeCategories(userId);
+        int overall = categories.isEmpty() ? 0 : (int) Math.round(categories.stream().mapToInt(c -> (Integer) c.get("progress")).average().orElse(0));
+        int attempted = 0;
+        int correctCount = 0;
+        if (userId != null) {
+            Map<String, Object> row = jdbc.queryForMap(
+                    "select count(*)::int as attempted, coalesce(sum(case when correct then 1 else 0 end),0)::int as correct from user_aptitude_progress where user_id=?",
+                    userId);
+            attempted = ((Number) row.get("attempted")).intValue();
+            correctCount = ((Number) row.get("correct")).intValue();
+        }
+        int accuracy = attempted == 0 ? 0 : Math.round(correctCount * 100f / attempted);
+        return map().put("overall", overall).put("attempted", attempted).put("accuracy", accuracy)
+                .put("categories", categories.stream().map(c -> List.of(c.get("name"), c.get("progress"))).toList()).done();
+    }
+
+    public List<Map<String, Object>> interviewQuestions(String category) {
+        if (category == null || category.isBlank()) {
+            return jdbc.queryForList("select id,category,question,tips,sort_order from interview_questions order by category,sort_order");
+        }
+        return jdbc.queryForList("select id,category,question,tips,sort_order from interview_questions where category=? order by sort_order", category);
+    }
+
+    public Map<String, Object> saveInterviewAttempt(UUID userId, String questionId, String answer, String feedback) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("insert into user_interview_attempts (id,user_id,question_id,answer,feedback) values (?,?,?,?,?)",
+                id, userId, questionId, answer == null ? "" : answer, feedback == null ? "" : feedback);
+        logActivity(userId, "🎤", "Interview practiced", questionId, "purple");
+        return map().put("id", id.toString()).put("questionId", questionId).put("saved", true).done();
+    }
+
+    public List<Map<String, Object>> interviewStats(UUID userId) {
+        if (userId == null) return List.of();
+        return jdbc.query("""
+                select q.category, count(*)::int as practiced
+                from user_interview_attempts a join interview_questions q on q.id=a.question_id
+                where a.user_id=? group by q.category
+                """, (rs, i) -> map().put("category", rs.getString("category")).put("practiced", rs.getInt("practiced")).done(), userId);
+    }
+
+    public Map<String, Object> getResume(UUID userId) {
+        return jdbc.query("select data::text as data, ats_score from user_resumes where user_id=?",
+                rs -> rs.next() ? map().put("data", jsonMap(rs.getString("data"))).put("atsScore", rs.getInt("ats_score")).done()
+                        : map().put("data", Map.of()).put("atsScore", 0).done(), userId);
+    }
+
+    public Map<String, Object> saveResume(UUID userId, Map<String, Object> data) {
+        int score = computeAtsScore(data);
+        jdbc.update("""
+                insert into user_resumes (user_id, data, ats_score) values (?, ?::jsonb, ?)
+                on conflict (user_id) do update set data=excluded.data, ats_score=excluded.ats_score, updated_at=now()
+                """, userId, toJson(data), score);
+        return map().put("data", data).put("atsScore", score).done();
+    }
+
+    private int computeAtsScore(Map<String, Object> data) {
+        if (data == null || data.isEmpty()) return 0;
+        int score = 40;
+        if (hasText(data, "name")) score += 8;
+        if (hasText(data, "email")) score += 8;
+        if (hasText(data, "phone")) score += 6;
+        if (hasText(data, "skills")) score += 12;
+        if (hasText(data, "projects") || hasText(data, "experience")) score += 14;
+        if (hasText(data, "education") || hasText(data, "college")) score += 12;
+        return Math.min(100, score);
+    }
+
+    private boolean hasText(Map<String, Object> data, String key) {
+        Object v = data.get(key);
+        return v != null && !String.valueOf(v).isBlank();
+    }
+
+    public List<Map<String, Object>> roadmapProgress(UUID userId) {
+        if (userId == null) return defaultRoadmap();
+        List<Map<String, Object>> rows = jdbc.query(
+                "select level_id,status from user_roadmap_progress where user_id=? order by level_id",
+                (rs, i) -> map().put("levelId", rs.getInt("level_id")).put("status", rs.getString("status")).done(), userId);
+        if (rows.isEmpty()) return defaultRoadmap();
+        return rows;
+    }
+
+    private List<Map<String, Object>> defaultRoadmap() {
+        return List.of(
+                Map.of("levelId", 1, "status", "done"),
+                Map.of("levelId", 2, "status", "done"),
+                Map.of("levelId", 3, "status", "active"),
+                Map.of("levelId", 4, "status", "locked"),
+                Map.of("levelId", 5, "status", "locked"),
+                Map.of("levelId", 6, "status", "locked"));
+    }
+
+    public Map<String, Object> updateRoadmapLevel(UUID userId, int levelId, String status) {
+        jdbc.update("""
+                insert into user_roadmap_progress (user_id, level_id, status) values (?, ?, ?)
+                on conflict (user_id, level_id) do update set status=excluded.status, updated_at=now()
+                """, userId, levelId, status);
+        return map().put("levelId", levelId).put("status", status).done();
+    }
+
+    public void logActivity(UUID userId, String icon, String title, String meta, String tone) {
+        if (userId == null) return;
+        try {
+            jdbc.update("insert into activity_events (user_id,icon,title,meta,tone) values (?,?,?,?,?)",
+                    userId, icon, title, meta, tone);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public Map<String, Object> logCodeExecution(UUID userId, String problemId, String language, String source, String status, String output) {
+        String hash = Integer.toHexString((source == null ? "" : source).hashCode());
+        UUID id = UUID.randomUUID();
+        jdbc.update("insert into code_executions (id,user_id,problem_id,language,source_hash,status,output) values (?,?,?,?,?,?,?)",
+                id, userId, problemId, language, hash, status, output == null ? "" : output);
+        return map().put("id", id.toString()).put("status", status).put("output", output).done();
     }
 
     public List<Map<String, Object>> mockTests() {
@@ -220,34 +418,75 @@ public class ContentRepository {
     }
 
     public Optional<Map<String, Object>> mockTest(String id) {
-        Optional<Map<String, Object>> base = mockTests().stream().filter(t -> id.equals(t.get("id"))).findFirst();
+        Optional<Map<String, Object>> base = jdbc.query("""
+                select t.*, t.sections::text as sections, count(q.id) as total_questions
+                from mock_tests t left join mock_test_questions q on q.test_id=t.id
+                where t.id=?
+                group by t.id
+                """, (rs, rowNum) -> map().put("id", rs.getString("id")).put("title", rs.getString("title"))
+                .put("type", rs.getString("type")).put("category", rs.getString("category")).put("difficulty", rs.getString("difficulty"))
+                .put("durationMinutes", rs.getInt("duration_minutes")).put("isFree", rs.getBoolean("is_free"))
+                .put("totalQuestions", rs.getInt("total_questions")).put("sections", jsonList(rs.getString("sections")))
+                .put("marksPerQuestion", rs.getInt("marks_per_question")).done(), id).stream().findFirst();
         base.ifPresent(test -> test.put("questions", mockQuestions(id)));
         return base;
     }
 
+    /**
+     * Public question list. Never includes the answer key — mock attempts are
+     * graded server-side by {@link #saveMockAttempt}, which reads the key
+     * directly from the database.
+     */
     public List<Map<String, Object>> mockQuestions(String id) {
         return jdbc.query("""
-                select id,section,topic,difficulty,question,options::text,correct_answer,explanation
+                select id,section,topic,difficulty,question,options::text
                 from mock_test_questions where test_id=? order by sort_order
                 """, (rs, rowNum) -> map().put("id", rs.getString("id")).put("section", rs.getString("section"))
                 .put("topic", rs.getString("topic")).put("difficulty", rs.getString("difficulty")).put("question", rs.getString("question"))
-                .put("options", jsonList(rs.getString("options"))).put("correctAnswer", rs.getInt("correct_answer"))
-                .put("explanation", rs.getString("explanation")).done(), id);
+                .put("options", jsonList(rs.getString("options"))).done(), id);
+    }
+
+    private Map<String, Integer> mockAnswerKey(String testId) {
+        Map<String, Integer> key = new LinkedHashMap<>();
+        for (Map<String, Object> row : jdbc.queryForList(
+                "select id,correct_answer from mock_test_questions where test_id=? order by sort_order", testId)) {
+            key.put((String) row.get("id"), ((Number) row.get("correct_answer")).intValue());
+        }
+        return key;
     }
 
     public Map<String, Object> saveMockAttempt(UUID userId, String testId, Map<String, Integer> answers) {
-        List<Map<String, Object>> questions = mockQuestions(testId);
+        Map<String, Integer> key = mockAnswerKey(testId);
         int correct = 0;
-        for (Map<String, Object> question : questions) {
-            Integer selected = answers.get((String) question.get("id"));
-            if (selected != null && selected.equals(question.get("correctAnswer"))) correct++;
+        for (Map.Entry<String, Integer> entry : key.entrySet()) {
+            Integer selected = answers.get(entry.getKey());
+            if (selected != null && selected.equals(entry.getValue())) correct++;
         }
-        int score = questions.isEmpty() ? 0 : Math.round(correct * 100f / questions.size());
+        int total = key.size();
+        int score = total == 0 ? 0 : Math.round(correct * 100f / total);
         jdbc.update("""
                 insert into mock_test_attempts (user_id,test_id,answers,score,total_questions,correct_answers)
                 values (?,?,?::jsonb,?,?,?)
-                """, userId, testId, toJson(answers), score, questions.size(), correct);
-        return map().put("score", score).put("totalQuestions", questions.size()).put("correct", correct).put("attempted", answers.size()).done();
+                """, userId, testId, toJson(answers), score, total, correct);
+        return map().put("score", score).put("totalQuestions", total).put("correct", correct).put("attempted", answers.size()).done();
+    }
+
+    public Map<String, Object> mockSummary(UUID userId) {
+        if (userId == null) {
+            return Map.of("attempted", 0, "bestScore", 0, "averageScore", 0, "questionsAttempted", 0);
+        }
+        Map<String, Object> row = jdbc.queryForMap("""
+                select count(*)::int as attempted,
+                       coalesce(max(score), 0)::int as best,
+                       coalesce(round(avg(score)), 0)::int as average,
+                       coalesce(sum((select count(*) from jsonb_object_keys(a.answers))), 0)::int as questions
+                from mock_test_attempts a where a.user_id=?
+                """, userId);
+        return Map.of(
+                "attempted", ((Number) row.get("attempted")).intValue(),
+                "bestScore", ((Number) row.get("best")).intValue(),
+                "averageScore", ((Number) row.get("average")).intValue(),
+                "questionsAttempted", ((Number) row.get("questions")).intValue());
     }
 
     public List<Map<String, Object>> mockHistory(UUID userId) {

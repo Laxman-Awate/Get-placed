@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 const TOKEN_KEY = 'placepro.token';
 
 export class ApiError extends Error {
@@ -19,13 +19,18 @@ export function setStoredToken(token) {
 
 export async function apiRequest(path, options = {}) {
   const token = getStoredToken();
+  const hasBody = options.body !== undefined && options.body !== null;
   const headers = {
     Accept: 'application/json',
-    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  if (response.status === 401) {
+    setStoredToken(null);
+    window.localStorage.removeItem('placepro.user');
+  }
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
     try {

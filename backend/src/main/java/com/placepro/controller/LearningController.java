@@ -20,4 +20,18 @@ public class LearningController {
     public Object learning(HttpServletRequest request) {
         return content.learning(currentUser.optionalUserId(request));
     }
+
+    @PostMapping("/progress")
+    public Object updateProgress(@RequestBody java.util.Map<String, Object> body,
+                                 HttpServletRequest request) {
+        String contentType = String.valueOf(body.getOrDefault("contentType", "topic"));
+        String contentId = String.valueOf(body.getOrDefault("contentId", ""));
+        boolean complete = Boolean.TRUE.equals(body.get("complete"));
+        if (contentId.isBlank()) {
+            throw new com.placepro.exception.ApiException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "contentId is required.");
+        }
+        return content.upsertLearningProgress(
+                currentUser.requiredUserId(request), contentType, contentId, complete);
+    }
 }

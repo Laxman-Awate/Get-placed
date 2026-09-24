@@ -36,13 +36,15 @@ public class AptitudeController {
 
     @GetMapping("/progress")
     public Object progress(HttpServletRequest request) {
-        List<Map<String, Object>> categories = content.aptitudeCategories(currentUser.optionalUserId(request));
-        int overall = categories.isEmpty() ? 0 : (int) Math.round(categories.stream().mapToInt(c -> (Integer) c.get("progress")).average().orElse(0));
-        return Map.of(
-                "overall", overall,
-                "attempted", 0,
-                "accuracy", 0,
-                "categories", categories.stream().map(c -> List.of(c.get("name"), c.get("progress"))).toList()
-        );
+        return content.aptitudeStats(currentUser.optionalUserId(request));
+    }
+
+    @PostMapping("/topics/{topicId}/attempts")
+    public Object submitAttempt(@PathVariable String topicId, @RequestBody java.util.Map<String, Object> body,
+                                HttpServletRequest request) {
+        String questionId = String.valueOf(body.get("questionId"));
+        Integer selected = body.get("selectedAnswer") == null ? null
+                : ((Number) body.get("selectedAnswer")).intValue();
+        return content.submitAptitudeAttempt(currentUser.requiredUserId(request), questionId, selected);
     }
 }

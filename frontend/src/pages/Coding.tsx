@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Play, RefreshCw, Send, ChevronRight, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useCodeExecution } from '../hooks/useCodeExecution';
 
 const defaultCode: Record<string, string> = {
   python: `def twoSum(nums: list[int], target: int) -> list[int]:
@@ -84,6 +85,18 @@ export default function Coding() {
   const [tab, setTab] = useState<Tab>('description');
   const [ran, setRan] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const exec = useCodeExecution();
+
+  const onRun = async () => {
+    setRan(true);
+    await exec.run({ language: lang, source: code, problemId: 'two-sum' });
+  };
+
+  const onSubmit = async () => {
+    setSubmitted(true);
+    await exec.run({ language: lang, source: code, problemId: 'two-sum' });
+    navigate('/dashboard/results');
+  };
 
   const changeLang = (l: string) => {
     setLang(l);
@@ -200,10 +213,10 @@ export default function Coding() {
             <button onClick={() => setCode(defaultCode[lang])} className="flex items-center gap-1.5 text-xs text-[#64748b] hover:text-[#94a3b8] transition-colors">
               <RefreshCw size={12} />Reset
             </button>
-            <button onClick={() => setRan(true)} className="flex items-center gap-1.5 text-xs bg-[#1e1e30] hover:bg-[#2e2e45] text-[#94a3b8] px-3 py-1.5 rounded-lg transition-all">
-              <Play size={11} />Run
+            <button onClick={onRun} className="flex items-center gap-1.5 text-xs bg-[#1e1e30] hover:bg-[#2e2e45] text-[#94a3b8] px-3 py-1.5 rounded-lg transition-all">
+              <Play size={11} />{exec.state === 'running' ? 'Running...' : 'Run'}
             </button>
-            <button onClick={() => { setSubmitted(true); navigate('/dashboard/results'); }} className="flex items-center gap-1.5 text-xs bg-teal-500 hover:bg-teal-400 text-white px-3 py-1.5 rounded-lg transition-all font-semibold">
+            <button onClick={onSubmit} className="flex items-center gap-1.5 text-xs bg-teal-500 hover:bg-teal-400 text-white px-3 py-1.5 rounded-lg transition-all font-semibold">
               <Send size={11} />Submit
             </button>
           </div>
@@ -225,6 +238,7 @@ export default function Coding() {
           <div className="flex items-center gap-4 px-4 pt-3 mb-3">
             <span className="text-xs font-semibold text-white">Test Cases</span>
             {ran && <span className="text-xs text-teal-400 font-medium flex items-center gap-1"><CheckCircle size={11} /> All 3 passed</span>}
+            {exec.output && <span className="text-[11px] text-[#64748b] truncate max-w-md" title={exec.output}>{exec.output}</span>}
           </div>
           <div className="overflow-x-auto hide-scrollbar px-4">
             <div className="flex gap-3">

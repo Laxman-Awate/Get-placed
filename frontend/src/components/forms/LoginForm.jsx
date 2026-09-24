@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { useAuth } from '../../context/AuthContext';
 import { useRoute } from '../../context/RouteContext';
 
@@ -20,8 +20,8 @@ export function LoginForm() {
 
       await loginWithGoogle(credentialResponse.credential);
       navigate(destination);
-    } catch {
-      setError('Google login failed. Please try again.');
+    } catch (err) {
+      setError(err.message || 'Google login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -121,15 +121,7 @@ export function LoginForm() {
           width: '100%',
         }}
       >
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-          theme="filled_black"
-          shape="pill"
-          size="large"
-          text="continue_with"
-          width="100%"
-        />
+        <GoogleSignInButton text="continue_with" onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
       </div>
     </form>
   );

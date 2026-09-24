@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Trophy, CheckCircle, ArrowRight, Star, Zap, TrendingUp, Target } from 'lucide-react';
+import { readinessService } from '../services/readinessService';
 
-const areas = [
+const fallbackAreas = [
   { name: 'Aptitude', pct: 85, color: 'bg-teal-500' },
   { name: 'DSA', pct: 72, color: 'bg-blue-500' },
   { name: 'Core CS', pct: 68, color: 'bg-purple-500' },
@@ -10,6 +12,9 @@ const areas = [
   { name: 'Interview Prep', pct: 60, color: 'bg-pink-500' },
   { name: 'Resume', pct: 78, color: 'bg-green-500' },
 ];
+
+const colorFor = (i: number) =>
+  ['bg-teal-500', 'bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-orange-500', 'bg-pink-500', 'bg-green-500'][i % 7];
 
 const achievements = [
   { icon: '🎯', title: '347 Problems Solved', sub: 'Across all categories' },
@@ -23,6 +28,27 @@ const nearReady = ['Amazon', 'Microsoft', 'Adobe'];
 
 export default function PlacementReady() {
   const navigate = useNavigate();
+  // Live backend scores when available; static fallback keeps the page
+  // useful offline or before any activity is recorded.
+  const [live, setLive] = useState<Array<{ label: string; score: number }> | null>(null);
+  useEffect(() => {
+    let active = true;
+    readinessService
+      .getReadiness()
+      .then((data) => active && Array.isArray(data) && setLive(data))
+      .catch(() => active && setLive(null));
+    return () => {
+      active = false;
+    };
+  }, []);
+  const areas = useMemo(() => {
+    if (!live || live.length === 0) return fallbackAreas;
+    return live.map((item, i) => ({
+      name: item.label || `Area ${i + 1}`,
+      pct: Math.max(0, Math.min(100, Number(item.score) || 0)),
+      color: colorFor(i),
+    }));
+  }, [live]);
   const overall = Math.round(areas.reduce((sum, a) => sum + a.pct, 0) / areas.length);
 
   return (

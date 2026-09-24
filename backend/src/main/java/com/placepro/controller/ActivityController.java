@@ -4,6 +4,8 @@ import com.placepro.service.CurrentUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,5 +40,17 @@ public class ActivityController {
                 group by activity_date
                 """, userId, userId, userId, userId, userId).stream()
                 .collect(Collectors.toMap(row -> (String) row.get("day"), row -> (Integer) row.get("count")));
+    }
+
+    @PostMapping
+    public Map<String, Object> log(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        java.util.UUID userId = currentUser.requiredUserId(request);
+        jdbc.update("insert into activity_events (user_id,icon,title,meta,tone) values (?,?,?,?,?)",
+                userId,
+                String.valueOf(body.getOrDefault("icon", "📌")),
+                String.valueOf(body.getOrDefault("title", "Activity")),
+                String.valueOf(body.getOrDefault("meta", "")),
+                String.valueOf(body.getOrDefault("tone", "blue")));
+        return Map.of("saved", true);
     }
 }

@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router';
 import {
   LayoutDashboard, BookOpen, FlaskConical, Code2, ClipboardList,
   Building2, MessageSquare, FileText, Settings, Zap, LogOut, Map
 } from 'lucide-react';
 import { authService } from '../services/authService';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -20,7 +22,15 @@ const navItems = [
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
-  const user = authService.getUser() || { name: 'Arjun Kumar', email: 'arjun.kumar@gmail.com' };
+  const user = authService.getUser();
+  useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      navigate('/login?mode=login', { replace: true });
+    }
+  }, [navigate]);
+  if (!user) {
+    return <div className="min-h-screen bg-[#080810] flex items-center justify-center text-sm text-[#94a3b8]">Redirecting to login...</div>;
+  }
   const initials = user.name
     ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'A';
@@ -89,7 +99,9 @@ export default function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
-        <Outlet />
+        <ErrorBoundary title="This page">
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

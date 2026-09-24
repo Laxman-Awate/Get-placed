@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import { cached, peek, TTL } from '../utils/cache';
+import { cached, invalidate, peek, TTL } from '../utils/cache';
 
 const KEY = 'learning';
 
@@ -13,4 +13,12 @@ export const learningService = {
   getTopics: async () => getLearning().then((data) => data.topics),
   getDSAModules: async () => getLearning().then((data) => data.dsaModules),
   getDSALessons: async () => getLearning().then((data) => data.dsaLessons),
+  updateProgress: async ({ contentType, contentId, complete }) => {
+    const res = await apiRequest('/learning/progress', {
+      method: 'POST',
+      body: JSON.stringify({ contentType, contentId, complete }),
+    });
+    invalidate(KEY);
+    return res;
+  },
 };

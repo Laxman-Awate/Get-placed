@@ -57,6 +57,19 @@ public class AuthService {
         return response(users.upsertGoogle(name.trim(), email, picture));
     }
 
+    /**
+     * Used by the OAuth2 authorization-code flow after Google redirects
+     * back to /login/oauth2/code/google with an authenticated principal.
+     */
+    public AuthResponse loginWithOAuth2(String email, String name, String pictureUrl) {
+        if (email == null || email.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Google account has no email address.");
+        }
+        String cleanEmail = email.trim().toLowerCase();
+        String displayName = (name == null || name.isBlank()) ? cleanEmail : name.trim();
+        return response(users.upsertGoogle(displayName, cleanEmail, pictureUrl));
+    }
+
     private AuthResponse response(UserRepository.User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("name", user.name());

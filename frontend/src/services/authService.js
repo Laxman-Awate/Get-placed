@@ -1,9 +1,10 @@
 import { jwtDecode } from 'jwt-decode';
 import { invalidate } from '../utils/cache';
+import { API_BASE_URL, getStoredToken, setStoredToken } from './apiClient';
 
 const USER_KEY = 'placepro.user';
-const TOKEN_KEY = 'placepro.token';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+// OAuth2 authorization endpoints live on the backend origin, not under /api.
+const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 function isTokenExpired(token) {
   if (!token) return true;
@@ -19,7 +20,7 @@ function isTokenExpired(token) {
 }
 
 function saveSession(token, user) {
-  window.localStorage.setItem(TOKEN_KEY, token);
+  setStoredToken(token);
   window.localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
@@ -50,30 +51,9 @@ function spaNavigate(to) {
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-function createDevAdminToken(user) {
-  const encodeB64 = (obj) => {
-    try {
-      return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-    } catch {
-      return btoa(JSON.stringify(obj));
-    }
-  };
-  const header = encodeB64({ alg: 'HS256', typ: 'JWT' });
-  const exp = Math.floor(Date.now() / 1000) + 86400 * 30;
-  const payload = encodeB64({
-    sub: user.email,
-    name: user.name,
-    role: user.role,
-    provider: user.provider,
-    plan: user.plan,
-    exp: exp,
-  });
-  return `${header}.${payload}.dev_local_token`;
-}
-
 export const authService = {
   isAuthenticated: () => {
-    const token = window.localStorage.getItem(TOKEN_KEY);
+    const token = getStoredToken();
     return Boolean(token) && !isTokenExpired(token);
   },
 
@@ -86,58 +66,34 @@ export const authService = {
     }
   },
 
-  getToken: () => window.localStorage.getItem(TOKEN_KEY),
+  getToken: () => getStoredToken(),
 
   register: async ({ name, email, password }) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    });
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+    } catch {
+      throw new Error('Cannot reach the server. Check your connection and try again.');
+    }
     return handleAuthResponse(response);
   },
 
   login: async ({ email, password }) => {
+    let response;
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      return await handleAuthResponse(response);
-    } catch (err) {
-      // Offline / local development fallback
-      const cleanEmail = String(email || '').trim().toLowerCase();
-      if (cleanEmail === 'admin@placepro.com' && password === 'admin123') {
-        const user = {
-          name: 'PlacePro Administrator',
-          email: 'admin@placepro.com',
-          role: 'ADMIN',
-          provider: 'LOCAL',
-          plan: 'premium',
-        };
-        const token = createDevAdminToken(user);
-        invalidate();
-        saveSession(token, user);
-        return { authenticated: true, user, token };
-      }
-      if (cleanEmail && password) {
-        const namePart = cleanEmail.split('@')[0].replace(/[._-]/g, ' ');
-        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        const user = {
-          name: formattedName || 'Arjun Kumar',
-          email: cleanEmail,
-          role: cleanEmail.includes('admin') ? 'ADMIN' : 'STUDENT',
-          provider: 'LOCAL',
-          plan: 'free',
-        };
-        const token = createDevAdminToken(user);
-        invalidate();
-        saveSession(token, user);
-        return { authenticated: true, user, token };
-      }
-      throw err;
+    } catch {
+      throw new Error('Cannot reach the server. Check your connection and try again.');
     }
+    return handleAuthResponse(response);
   },
 
   // Google: frontend only collects the Google ID token; verification happens
@@ -145,17 +101,57 @@ export const authService = {
   // rejects the token, login fails instead of silently logging in.
   loginWithGoogle: async (credential) => {
     if (!credential) throw new Error('Missing Google credential.');
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: credential }),
-    });
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: credential }),
+      });
+    } catch {
+      throw new Error('Cannot reach the server. Check your connection and try again.');
+    }
     return handleAuthResponse(response);
+  },
+
+  // Google OAuth2 authorization-code flow (server-side):
+  // full-page redirect to Spring Boot, which bounces to Google and back
+  // with an app JWT at /oauth/callback?token=...
+  startGoogleOAuth: () => {
+    window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/google`;
+  },
+
+  // Completes the OAuth2 flow: validates the backend JWT from the callback
+  // URL and builds the session from its claims (no extra request needed).
+  loginWithOAuthToken: async (token) => {
+    if (!token) throw new Error('Missing login token.');
+    let decoded;
+    try {
+      decoded = jwtDecode(token);
+    } catch {
+      throw new Error('Invalid login token. Please try again.');
+    }
+    if (!decoded.exp || decoded.exp * 1000 <= Date.now()) {
+      throw new Error('Login session expired. Please try again.');
+    }
+    const email = decoded.sub || '';
+    if (!email) throw new Error('Login token has no user. Please try again.');
+    const user = {
+      name: decoded.name || email,
+      email,
+      picture: decoded.picture,
+      role: decoded.role || 'STUDENT',
+      provider: decoded.provider || 'GOOGLE',
+      plan: decoded.plan,
+    };
+    invalidate();
+    saveSession(token, user);
+    return { authenticated: true, user, token };
   },
 
   // Authenticated fetch helper: attaches backend JWT, logs out on 401.
   authFetch: async (path, options = {}) => {
-    const token = window.localStorage.getItem(TOKEN_KEY);
+    const token = getStoredToken();
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {
@@ -174,7 +170,7 @@ export const authService = {
 
   logout: () => {
     window.localStorage.removeItem(USER_KEY);
-    window.localStorage.removeItem(TOKEN_KEY);
+    setStoredToken(null);
     invalidate();
   },
 };

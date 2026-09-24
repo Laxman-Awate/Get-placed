@@ -52,6 +52,13 @@ public class ReadinessController {
         if (userId != null) {
             Integer c = jdbc.queryForObject("select count(*) from user_company_progress where user_id=?", Integer.class, userId);
             companiesScore = (c == null || c == 0) ? 0 : Math.min(100, c * 20);
+            Integer total = jdbc.queryForObject("select count(*) from subject_topics", Integer.class);
+            Integer done = jdbc.queryForObject(
+                    "select count(*) from user_learning_progress where user_id=? and complete=true and content_type in ('topic','lesson')",
+                    Integer.class, userId);
+            if (total != null && total > 0 && done != null) {
+                academicsScore = Math.min(100, Math.round(done * 100f / total));
+            }
         }
 
         return List.of(

@@ -1,24 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Bell, Search, TrendingUp, Code2, ClipboardList, BarChart3, BookOpen,
-  ChevronRight, MoreHorizontal, Play, ArrowRight, Star, Zap, X
+  ArrowRight,
+  BarChart3,
+  Bell,
+  BookOpen,
+  ChevronRight,
+  ClipboardList,
+  Code2,
+  Play,
+  Search,
+  Star,
+  TrendingUp,
 } from 'lucide-react';
-
-const notifications = [
-  { id: 1, text: 'You have a TCS Mock Test scheduled tomorrow', time: '1h ago', type: 'test', read: false },
-  { id: 2, text: 'New DSA problems added: Graphs — 15 problems', time: '3h ago', type: 'content', read: false },
-  { id: 3, text: 'Weekly report ready: You improved by 5% this week!', time: '1d ago', type: 'report', read: true },
-  { id: 4, text: 'Amazon is visiting your campus in 2 weeks', time: '2d ago', type: 'placement', read: true },
-];
-
-const summaryCards = [
-  { label: 'Placement Readiness', value: '78%', sub: '+5% this week', color: 'teal', icon: TrendingUp, bar: 78 },
-  { label: 'Questions Solved', value: '347', sub: '1,200+ available', color: 'blue', icon: Code2, bar: 29 },
-  { label: 'Mock Tests', value: '12', sub: '3 pending', color: 'purple', icon: ClipboardList, bar: 60 },
-  { label: 'Average Score', value: '82%', sub: 'Top 15%', color: 'orange', icon: BarChart3, bar: 82 },
-  { label: 'Learning Progress', value: '64%', sub: '8 modules done', color: 'green', icon: BookOpen, bar: 64 },
-];
+import { useCodingProblems } from '../hooks/useCodingProblems';
+import { useCompanyDirectory } from '../hooks/useCompanies';
+import { useContributionActivity } from '../hooks/useContributionActivity';
+import { useDashboard } from '../hooks/useDashboard';
+import { useMockTests } from '../hooks/useMockTests';
+import { authService } from '../services/authService';
+import { learningService } from '../services/learningService';
 
 const colorMap: Record<string, string> = {
   teal: 'text-teal-400 bg-teal-500/10',
@@ -36,82 +37,46 @@ const barColorMap: Record<string, string> = {
   green: 'from-green-500 to-emerald-400',
 };
 
-const weekActivity = [
-  { day: 'Mon', val: 85 }, { day: 'Tue', val: 60 }, { day: 'Wed', val: 92 },
-  { day: 'Thu', val: 45 }, { day: 'Fri', val: 78 }, { day: 'Sat', val: 95 }, { day: 'Sun', val: 30 },
-];
+const statIcons = [Code2, ClipboardList, BarChart3, BookOpen, TrendingUp];
+const statColors = ['blue', 'purple', 'teal', 'green', 'orange'];
+const accentColors = ['bg-teal-500', 'bg-blue-500', 'bg-purple-500', 'bg-orange-500', 'bg-green-500'];
+const companyColors: Record<string, string> = {
+  Product: 'from-blue-600 to-cyan-500',
+  Service: 'from-indigo-700 to-blue-600',
+  Consulting: 'from-green-700 to-teal-600',
+};
 
-const skills = [
-  { name: 'Aptitude', pct: 82, color: 'bg-teal-500' },
-  { name: 'DSA', pct: 67, color: 'bg-blue-500' },
-  { name: 'DBMS', pct: 75, color: 'bg-purple-500' },
-  { name: 'OS', pct: 58, color: 'bg-orange-500' },
-  { name: 'CN', pct: 63, color: 'bg-pink-500' },
-  { name: 'Coding', pct: 71, color: 'bg-indigo-500' },
-];
-
-const featuredCards = [
-  { title: 'Data Structures & Algorithms', sub: 'Master arrays to graphs', tag: '450+ Problems', color: 'from-teal-600 to-cyan-500', img: '🌳' },
-  { title: 'Low Level Design', sub: 'Design patterns & OOP', tag: 'Advanced', color: 'from-purple-600 to-violet-500', img: '🔧' },
-  { title: 'All Problems', sub: '1,200+ curated questions', tag: 'Mixed', color: 'from-blue-600 to-indigo-500', img: '📚' },
-  { title: 'Object Oriented Programming', sub: 'Core OOP concepts', tag: 'Foundation', color: 'from-orange-600 to-amber-500', img: '🎯' },
-];
-
-type LearnCard = { title: string; desc: string; accent: string; };
-
-const sections: { title: string; cards: LearnCard[] }[] = [
-  {
-    title: 'Data Structures and Algorithms',
-    cards: [
-      { title: 'DSA', desc: 'Complete structured course', accent: 'bg-teal-500' },
-      { title: 'All Problems', desc: '1200+ practice questions', accent: 'bg-blue-500' },
-      { title: 'DSA Concept Revision', desc: 'Quick concept refresher', accent: 'bg-purple-500' },
-      { title: 'DSA Quick Revision', desc: 'Last-minute revision pack', accent: 'bg-orange-500' },
-    ],
-  },
-  {
-    title: 'Design',
-    cards: [
-      { title: 'OOP', desc: 'Classes, inheritance & more', accent: 'bg-pink-500' },
-      { title: 'Low Level Design', desc: 'Design patterns & SOLID', accent: 'bg-violet-500' },
-    ],
-  },
-  {
-    title: 'Core Subjects',
-    cards: [
-      { title: 'Operating Systems', desc: 'Processes, memory & I/O', accent: 'bg-indigo-500' },
-      { title: 'Computer Networks', desc: 'TCP/IP, protocols & security', accent: 'bg-cyan-500' },
-      { title: 'DBMS', desc: 'SQL, normalization & transactions', accent: 'bg-emerald-500' },
-    ],
-  },
-  {
-    title: 'Aptitude',
-    cards: [
-      { title: 'Logical Reasoning', desc: 'Puzzles, syllogisms & more', accent: 'bg-yellow-500' },
-      { title: 'Quantitative Aptitude', desc: 'Maths for placement tests', accent: 'bg-orange-500' },
-      { title: 'Verbal Ability', desc: 'Grammar, vocab & RC', accent: 'bg-rose-500' },
-      { title: 'Mock Test', desc: 'Full-length aptitude test', accent: 'bg-teal-500' },
-    ],
-  },
-];
-
-const companies = [
-  { name: 'TCS', logo: '🏢', progress: 65, type: 'Service', color: 'from-blue-700 to-indigo-600' },
-  { name: 'Infosys', logo: '💼', progress: 42, type: 'Service', color: 'from-indigo-700 to-blue-600' },
-  { name: 'Amazon', logo: '📦', progress: 78, type: 'Product', color: 'from-orange-500 to-amber-500' },
-  { name: 'Microsoft', logo: '🪟', progress: 53, type: 'Product', color: 'from-blue-600 to-cyan-500' },
-  { name: 'Google', logo: '🔍', progress: 34, type: 'Product', color: 'from-blue-500 to-green-500' },
-  { name: 'Adobe', logo: '🎨', progress: 28, type: 'Product', color: 'from-red-600 to-rose-500' },
-  { name: 'Wipro', logo: '🌐', progress: 71, type: 'Service', color: 'from-purple-700 to-violet-600' },
-  { name: 'Deloitte', logo: '🔷', progress: 44, type: 'Consulting', color: 'from-green-700 to-teal-600' },
-];
+function percentFromValue(value: unknown) {
+  const parsed = Number.parseInt(String(value || '0').replace(/[^\d]/g, ''), 10);
+  return Number.isFinite(parsed) ? Math.min(100, parsed) : 0;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const user = authService.getUser();
+  const { data: dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard();
+  const { problems, loading: problemsLoading } = useCodingProblems();
+  const { data: companies, loading: companiesLoading } = useCompanyDirectory();
+  const { tests, summary: mockSummary, loading: mockLoading } = useMockTests();
+  const activity = useContributionActivity();
+  const [learning, setLearning] = useState<any>(() => learningService.peekLearning?.() || null);
+  const [learningLoading, setLearningLoading] = useState(() => !learningService.peekLearning?.());
   const [search, setSearch] = useState('');
   const [showNotifs, setShowNotifs] = useState(false);
-  const [notifList, setNotifList] = useState(notifications);
+  const [readNotifications, setReadNotifications] = useState<Record<string, boolean>>({});
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    learningService
+      .getLearning()
+      .then((data) => active && setLearning(data))
+      .catch(() => active && setLearning(null))
+      .finally(() => active && setLearningLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -123,29 +88,232 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const unread = notifList.filter(n => !n.read).length;
+  const summaryCards = useMemo(() => {
+    const stats = dashboardData?.stats || [];
+    return stats.map((stat: any, index: number) => ({
+      label: stat.label,
+      value: stat.value,
+      sub: stat.change,
+      color: statColors[index % statColors.length],
+      icon: statIcons[index % statIcons.length],
+      bar: percentFromValue(stat.value),
+    }));
+  }, [dashboardData]);
+
+  const solvedProblems = problems.filter((problem: any) => problem.solved).length;
+  const bookmarkedProblems = problems.filter((problem: any) => problem.bookmarked).length;
+
+  const topicProgress = useMemo(() => {
+    const grouped = new Map<string, { total: number; solved: number }>();
+    problems.forEach((problem: any) => {
+      const topic = problem.topic || 'Coding';
+      const current = grouped.get(topic) || { total: 0, solved: 0 };
+      current.total += 1;
+      if (problem.solved) current.solved += 1;
+      grouped.set(topic, current);
+    });
+    return Array.from(grouped.entries()).slice(0, 6).map(([name, value], index) => ({
+      name,
+      pct: value.total ? Math.round((value.solved * 100) / value.total) : 0,
+      color: accentColors[index % accentColors.length],
+    }));
+  }, [problems]);
+
+  const weeklyActivity = useMemo(() => {
+    const allDays = activity.weeks?.flat?.() || [];
+    const today = new Date();
+    return Array.from({ length: 7 }).map((_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      const key = date.toISOString().slice(0, 10);
+      const count = Number(allDays.find((day: any) => day.key === key)?.count || 0);
+      return {
+        day: date.toLocaleDateString('en', { weekday: 'short' }),
+        count,
+        val: Math.min(100, count * 25),
+      };
+    });
+  }, [activity.weeks]);
+
+  const learningCards = useMemo(() => {
+    const modules = (learning?.dsaModules || []).map((module: any, index: number) => ({
+      title: module.name,
+      desc: `${module.lessons || 0} lessons - ${module.progress || 0}% complete`,
+      accent: accentColors[index % accentColors.length],
+    }));
+    const subjects = (learning?.subjects || []).map((subject: any, index: number) => ({
+      title: subject.name,
+      desc: `${subject.topics || 0} topics - ${subject.progress || 0}% complete`,
+      accent: accentColors[(index + 2) % accentColors.length],
+    }));
+    return [
+      { title: 'DSA Course', cards: modules.slice(0, 6) },
+      { title: 'Core Subjects', cards: subjects.slice(0, 6) },
+    ].filter((section) => section.cards.length > 0);
+  }, [learning]);
+
+  const featuredCards = useMemo(() => {
+    const cards: Array<{ title: string; sub: string; tag: string; color: string; to: string }> = [];
+    const nextCourse = dashboardData?.course;
+    if (nextCourse) {
+      cards.push({
+        title: nextCourse.title,
+        sub: `Next: ${nextCourse.next}`,
+        tag: `${nextCourse.progress || 0}% complete`,
+        color: 'from-teal-600 to-cyan-500',
+        to: '/dashboard/learn',
+      });
+    }
+    problems.slice(0, 3).forEach((problem: any) => {
+      cards.push({
+        title: problem.title,
+        sub: `${problem.difficulty} - ${problem.topic}`,
+        tag: problem.solved ? 'Solved' : problem.bookmarked ? 'Saved' : 'Practice',
+        color:
+          problem.difficulty === 'Hard'
+            ? 'from-red-600 to-rose-500'
+            : problem.difficulty === 'Medium'
+              ? 'from-orange-600 to-amber-500'
+              : 'from-blue-600 to-indigo-500',
+        to: '/dashboard/practice',
+      });
+    });
+    tests.slice(0, 2).forEach((test: any) => {
+      cards.push({
+        title: test.title,
+        sub: `${test.totalQuestions || 0} questions - ${test.durationMinutes || 0} min`,
+        tag: test.difficulty,
+        color: 'from-purple-600 to-violet-500',
+        to: '/dashboard/mock-test',
+      });
+    });
+    return cards.slice(0, 6);
+  }, [dashboardData, problems, tests]);
+
+  const notifications = useMemo(() => {
+    const recent = dashboardData?.recentActivity || [];
+    const items = recent.map((item: any, index: number) => ({
+      id: `activity-${index}-${item.title}`,
+      text: `${item.title} - ${item.meta}`,
+      time: 'Recent',
+      read: Boolean(readNotifications[`activity-${index}-${item.title}`]),
+    }));
+    if (mockSummary.attempted === 0 && tests.length > 0) {
+      items.unshift({
+        id: 'first-mock-test',
+        text: `Try your first mock test: ${tests[0].title}`,
+        time: 'Suggested',
+        read: Boolean(readNotifications['first-mock-test']),
+      });
+    }
+    if (bookmarkedProblems > 0) {
+      items.unshift({
+        id: 'saved-problems',
+        text: `${bookmarkedProblems} saved coding problems are waiting for practice`,
+        time: 'Saved',
+        read: Boolean(readNotifications['saved-problems']),
+      });
+    }
+    return items;
+  }, [bookmarkedProblems, dashboardData, mockSummary.attempted, readNotifications, tests]);
+
+  const filteredLearningSections = learningCards
+    .map((section) => ({
+      ...section,
+      cards: section.cards.filter((card: any) =>
+        `${section.title} ${card.title} ${card.desc}`.toLowerCase().includes(search.toLowerCase())
+      ),
+    }))
+    .filter((section) => section.cards.length > 0);
+
+  const unread = notifications.filter((item) => !item.read).length;
+  const readiness = dashboardData?.course?.progress ?? percentFromValue(summaryCards.at(-1)?.value);
+  // Atomic reveal: every section shares one gate, so the page appears
+  // all at once instead of trickling in piece by piece. Warm cache
+  // (return visits) reveals instantly; cold loads show one skeleton.
+  const allSettled =
+    !dashboardLoading && !problemsLoading && !mockLoading && !learningLoading && !companiesLoading && !activity.loading;
+  const [revealed, setRevealed] = useState(allSettled);
+  useEffect(() => {
+    if (allSettled) {
+      setRevealed(true);
+      return;
+    }
+    // Failsafe: never trap the user on a skeleton if one source hangs.
+    const t = setTimeout(() => setRevealed(true), 10000);
+    return () => clearTimeout(t);
+  }, [allSettled]);
+
+  if (!revealed) {
+    return (
+      <div className="min-h-full bg-[#080810] p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-6 w-64 rounded-lg bg-[#0f0f1a] border border-[#1e1e30] animate-pulse mb-2" />
+            <div className="h-4 w-80 rounded-lg bg-[#0f0f1a] border border-[#1e1e30] animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-52 rounded-xl bg-[#0f0f1a] border border-[#1e1e30] animate-pulse" />
+            <div className="h-9 w-9 rounded-xl bg-[#0f0f1a] border border-[#1e1e30] animate-pulse" />
+            <div className="h-8 w-8 rounded-full bg-[#0f0f1a] border border-[#1e1e30] animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="card-dark rounded-xl p-4">
+              <div className="h-8 w-8 rounded-lg bg-[#1e1e30] animate-pulse mb-3" />
+              <div className="h-7 w-20 rounded bg-[#1e1e30] animate-pulse mb-2" />
+              <div className="h-3 w-24 rounded bg-[#1e1e30] animate-pulse mb-3" />
+              <div className="h-1.5 rounded-full bg-[#1e1e30] animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="col-span-2 card-dark rounded-xl p-5">
+            <div className="h-4 w-32 rounded bg-[#1e1e30] animate-pulse mb-4" />
+            <div className="flex items-end gap-2 h-24">
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex-1 rounded-t-lg bg-[#1e1e30] animate-pulse" style={{ height: `${30 + ((i * 37) % 60)}%` }} />
+              ))}
+            </div>
+          </div>
+          <div className="card-dark rounded-xl p-5">
+            <div className="h-4 w-28 rounded bg-[#1e1e30] animate-pulse mb-4" />
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-3 rounded bg-[#1e1e30] animate-pulse mb-2.5" />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-sm text-[#64748b] py-4">
+          <span className="w-4 h-4 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
+          Loading your dashboard...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-[#080810] p-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold font-[Plus_Jakarta_Sans] text-white">Good morning, Arjun 👋</h1>
-          <p className="text-sm text-[#64748b]">You're 78% placement ready. Keep going!</p>
+          <h1 className="text-xl font-bold font-[Plus_Jakarta_Sans] text-white">Good morning, {user?.name || 'there'}</h1>
+          <p className="text-sm text-[#64748b]">
+            {dashboardError ? 'Dashboard data is unavailable right now.' : `You are ${readiness}% through your current preparation plan.`}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search topics..."
-              className="bg-[#0f0f1a] border border-[#1e1e30] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-[#475569] focus:outline-none focus:border-teal-500/50 w-48"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search dashboard..."
+              className="bg-[#0f0f1a] border border-[#1e1e30] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-[#475569] focus:outline-none focus:border-teal-500/50 w-52"
             />
           </div>
           <div className="relative" ref={notifRef}>
             <button
-              onClick={() => setShowNotifs(s => !s)}
+              onClick={() => setShowNotifs((show) => !show)}
               className="relative p-2 rounded-xl border border-[#1e1e30] bg-[#0f0f1a] text-[#94a3b8] hover:text-white transition-colors"
             >
               <Bell size={16} />
@@ -154,40 +322,48 @@ export default function Dashboard() {
             {showNotifs && (
               <div className="absolute right-0 top-11 w-80 card-dark rounded-2xl border border-[#1e1e30] shadow-2xl z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e1e30]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">Notifications</span>
-                    {unread > 0 && <span className="text-[10px] font-bold bg-teal-500 text-white px-1.5 py-0.5 rounded-full">{unread}</span>}
-                  </div>
+                  <span className="text-sm font-semibold text-white">Updates</span>
                   <button
-                    onClick={() => setNotifList(prev => prev.map(n => ({ ...n, read: true })))}
+                    onClick={() => setReadNotifications(Object.fromEntries(notifications.map((item) => [item.id, true])))}
                     className="text-[10px] text-teal-400 hover:underline"
-                  >Mark all read</button>
+                  >
+                    Mark all read
+                  </button>
                 </div>
                 <div className="max-h-72 overflow-y-auto hide-scrollbar">
-                  {notifList.map(n => (
-                    <div
-                      key={n.id}
-                      className={`flex items-start gap-3 px-4 py-3 border-b border-[#1e1e30] last:border-0 cursor-pointer hover:bg-[#0f0f1a] transition-colors ${!n.read ? 'bg-teal-500/3' : ''}`}
-                      onClick={() => setNotifList(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))}
-                    >
-                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.read ? 'bg-[#2e2e45]' : 'bg-teal-400'}`} />
-                      <div className="flex-1">
-                        <div className={`text-xs leading-relaxed ${n.read ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>{n.text}</div>
-                        <div className="text-[10px] text-[#475569] mt-1">{n.time}</div>
-                      </div>
-                    </div>
-                  ))}
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-[#64748b]">No recent updates yet.</div>
+                  ) : (
+                    notifications.map((item) => (
+                      <button
+                        key={item.id}
+                        className={`w-full flex items-start gap-3 px-4 py-3 border-b border-[#1e1e30] last:border-0 text-left hover:bg-[#0f0f1a] transition-colors ${!item.read ? 'bg-teal-500/3' : ''}`}
+                        onClick={() => setReadNotifications((current) => ({ ...current, [item.id]: true }))}
+                      >
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.read ? 'bg-[#2e2e45]' : 'bg-teal-400'}`} />
+                        <div className="flex-1">
+                          <div className={`text-xs leading-relaxed ${item.read ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>{item.text}</div>
+                          <div className="text-[10px] text-[#475569] mt-1">{item.time}</div>
+                        </div>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             )}
           </div>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white cursor-pointer">A</div>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
+            {(user?.name || user?.email || 'U').slice(0, 1).toUpperCase()}
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-5 gap-3 mb-6">
-        {summaryCards.map(card => {
+      {dashboardError && (
+        <div className="card-dark rounded-xl p-4 mb-6 text-sm text-[#64748b]">Dashboard data is unavailable right now.</div>
+      )}
+
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {summaryCards.map((card: any) => {
           const Icon = card.icon;
           return (
             <div key={card.label} className="card-dark card-lift rounded-xl p-4">
@@ -208,69 +384,73 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {/* Weekly Activity */}
         <div className="col-span-2 card-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold text-white">Weekly Activity</div>
-            <span className="text-xs text-[#64748b]">This week</span>
+            <span className="text-xs text-[#64748b]">{activity.totalSubmissions || 0} total actions</span>
           </div>
           <div className="flex items-end gap-2 h-24">
-            {weekActivity.map((d, i) => (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+            {weeklyActivity.map((day) => (
+              <div key={day.day} className="flex-1 flex flex-col items-center gap-1">
                 <div
-                  className={`w-full rounded-t-lg ${i === 6 ? 'bg-gradient-to-t from-teal-600 to-teal-400' : 'bg-[#1e1e30] hover:bg-[#2e2e45] transition-colors'}`}
-                  style={{ height: `${d.val}%` }}
+                  className={`w-full rounded-t-lg ${day.count > 0 ? 'bg-gradient-to-t from-teal-600 to-teal-400' : 'bg-[#1e1e30]'}`}
+                  style={{ height: `${Math.max(day.val, 8)}%` }}
+                  title={`${day.count} actions`}
                 />
-                <span className="text-[9px] text-[#475569]">{d.day}</span>
+                <span className="text-[9px] text-[#475569]">{day.day}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Skill Progress */}
         <div className="card-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold text-white">Skill Progress</div>
-            <button className="text-xs text-teal-400 hover:underline" onClick={() => navigate('/dashboard/roadmap')}>View roadmap</button>
+            <button className="text-xs text-teal-400 hover:underline" onClick={() => navigate('/dashboard/practice')}>Practice</button>
           </div>
           <div className="space-y-2.5">
-            {skills.map(s => (
-              <div key={s.name} className="flex items-center gap-2">
-                <span className="text-[11px] text-[#64748b] w-14">{s.name}</span>
-                <div className="flex-1 h-1.5 bg-[#1e1e30] rounded-full overflow-hidden">
-                  <div className={`h-full ${s.color} rounded-full`} style={{ width: `${s.pct}%` }} />
+            {topicProgress.length === 0 ? (
+              <div className="text-xs text-[#64748b]">Solve problems to build skill progress.</div>
+            ) : (
+              topicProgress.map((skill) => (
+                <div key={skill.name} className="flex items-center gap-2">
+                  <span className="text-[11px] text-[#64748b] w-20 truncate">{skill.name}</span>
+                  <div className="flex-1 h-1.5 bg-[#1e1e30] rounded-full overflow-hidden">
+                    <div className={`h-full ${skill.color} rounded-full`} style={{ width: `${skill.pct}%` }} />
+                  </div>
+                  <span className="text-[11px] text-[#94a3b8] w-7 text-right">{skill.pct}%</span>
                 </div>
-                <span className="text-[11px] text-[#94a3b8] w-7 text-right">{s.pct}%</span>
-              </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {featuredCards.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold font-[Plus_Jakarta_Sans] text-white">Continue Next</h2>
+            <button className="text-xs text-teal-400 flex items-center gap-1 hover:underline" onClick={() => navigate('/dashboard/practice')}>
+              View practice <ChevronRight size={12} />
+            </button>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+            {featuredCards.map((card) => (
+              <button
+                key={`${card.title}-${card.tag}`}
+                onClick={() => navigate(card.to)}
+                className={`flex-shrink-0 w-56 h-36 rounded-2xl bg-gradient-to-br ${card.color} p-5 cursor-pointer relative overflow-hidden card-lift text-left`}
+              >
+                <div className="inline-block px-2 py-0.5 rounded-full bg-white/20 text-[10px] text-white font-medium mb-2">{card.tag}</div>
+                <div className="text-sm font-bold text-white leading-tight mb-1">{card.title}</div>
+                <div className="text-[10px] text-white/70">{card.sub}</div>
+              </button>
             ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Featured Carousel */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold font-[Plus_Jakarta_Sans] text-white">Featured</h2>
-          <button className="text-xs text-teal-400 flex items-center gap-1 hover:underline">View all <ChevronRight size={12} /></button>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-          {featuredCards.map(card => (
-            <div
-              key={card.title}
-              onClick={() => navigate('/dashboard/learn')}
-              className={`flex-shrink-0 w-56 h-36 rounded-2xl bg-gradient-to-br ${card.color} p-5 cursor-pointer relative overflow-hidden card-lift`}
-            >
-              <div className="absolute -right-4 -bottom-4 text-6xl opacity-30">{card.img}</div>
-              <div className="inline-block px-2 py-0.5 rounded-full bg-white/20 text-[10px] text-white font-medium mb-2">{card.tag}</div>
-              <div className="text-sm font-bold text-white leading-tight mb-1">{card.title}</div>
-              <div className="text-[10px] text-white/70">{card.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Topic Sections */}
-      {sections.map(section => (
+      {filteredLearningSections.map((section) => (
         <div key={section.title} className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold font-[Plus_Jakarta_Sans] text-white">{section.title}</h2>
@@ -279,16 +459,11 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-            {section.cards.map(card => (
+            {section.cards.map((card: any) => (
               <div key={card.title} className="flex-shrink-0 w-52 card-dark card-lift rounded-xl overflow-hidden flex">
                 <div className={`w-1 ${card.accent} flex-shrink-0 rounded-l-xl`} />
                 <div className="flex-1 p-4">
-                  <div className="flex items-start justify-between mb-1.5">
-                    <div className="text-sm font-semibold text-white leading-tight">{card.title}</div>
-                    <button className="text-[#475569] hover:text-[#94a3b8] ml-2 flex-shrink-0">
-                      <MoreHorizontal size={14} />
-                    </button>
-                  </div>
+                  <div className="text-sm font-semibold text-white leading-tight mb-1.5">{card.title}</div>
                   <div className="text-[11px] text-[#64748b] mb-3">{card.desc}</div>
                   <button
                     onClick={() => navigate('/dashboard/learn')}
@@ -304,12 +479,11 @@ export default function Dashboard() {
         </div>
       ))}
 
-      {/* Company Preparation */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-base font-bold font-[Plus_Jakarta_Sans] text-white">Company Preparation</h2>
-            <p className="text-xs text-[#64748b] mt-0.5">Tailored prep for your target companies</p>
+            <p className="text-xs text-[#64748b] mt-0.5">Published company tracks from your backend</p>
           </div>
           <button className="text-xs text-teal-400 flex items-center gap-1 hover:underline" onClick={() => navigate('/dashboard/company-prep')}>
             View all companies <ChevronRight size={12} />
@@ -317,23 +491,19 @@ export default function Dashboard() {
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-          {companies.map(c => (
-            <div key={c.name} className="flex-shrink-0 w-64 card-dark card-lift rounded-xl p-5">
+          {companies.slice(0, 8).map((company: any) => (
+            <div key={company.id || company.name} className="flex-shrink-0 w-64 card-dark card-lift rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-xl`}>
-                  {c.logo}
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${companyColors[company.type] || 'from-blue-600 to-cyan-500'} flex items-center justify-center text-sm font-bold text-white`}>
+                  {company.name?.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-white">{c.name}</div>
-                  <div className="text-[10px] text-[#64748b]">{c.type} Company</div>
+                  <div className="text-sm font-bold text-white">{company.name}</div>
+                  <div className="text-[10px] text-[#64748b]">{company.type} - {company.difficulty}</div>
                 </div>
-                <div className="ml-auto text-xs font-semibold text-teal-400">{c.progress}%</div>
-              </div>
-              <div className="h-1.5 bg-[#1e1e30] rounded-full mb-3">
-                <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 rounded-full transition-all" style={{ width: `${c.progress}%` }} />
               </div>
               <div className="flex flex-wrap gap-1 mb-3">
-                {['Aptitude', 'Coding', 'Core CS', 'Technical', 'HR'].map(area => (
+                {(company.areas || []).slice(0, 5).map((area: string) => (
                   <span key={area} className="text-[9px] px-1.5 py-0.5 rounded bg-[#0f0f1a] text-[#64748b] border border-[#1e1e30]">{area}</span>
                 ))}
               </div>
@@ -345,10 +515,12 @@ export default function Dashboard() {
               </button>
             </div>
           ))}
+          {!companiesLoading && companies.length === 0 && (
+            <div className="card-dark rounded-xl p-6 text-sm text-[#64748b]">No companies have been published yet.</div>
+          )}
         </div>
       </div>
 
-      {/* Placement Ready Prompt */}
       <div
         onClick={() => navigate('/dashboard/placement-ready')}
         className="card-dark rounded-xl p-5 flex items-center justify-between cursor-pointer hover:border-teal-500/30 transition-all group mb-2"
@@ -359,7 +531,9 @@ export default function Dashboard() {
           </div>
           <div>
             <div className="text-sm font-bold text-white">Check Your Placement Readiness</div>
-            <div className="text-xs text-[#64748b]">See your score, analysis and next steps</div>
+            <div className="text-xs text-[#64748b]">
+              {solvedProblems} solved - {mockSummary.attempted || 0} mock tests attempted
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 text-teal-400 group-hover:gap-3 transition-all">

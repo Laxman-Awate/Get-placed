@@ -32,6 +32,12 @@ export function AuthProvider({ children }) {
         setAuthenticated(true);
         return res;
       },
+      loginWithOAuthToken: async (token) => {
+        const res = await authService.loginWithOAuthToken(token);
+        setUser(res.user);
+        setAuthenticated(true);
+        return res;
+      },
       logout: () => {
         authService.logout();
         invalidate();

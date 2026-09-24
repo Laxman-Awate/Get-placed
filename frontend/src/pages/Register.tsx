@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router';
 import { Zap, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { authService } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { login, register } = useAuth();
 
   // If path is /login or ?mode=login, default to login view
   const isLoginInitial = location.pathname === '/login' || searchParams.get('mode') === 'login';
@@ -25,6 +27,13 @@ export default function Register() {
     confirm: '',
     remember: true,
   });
+
+  // OAuth2 failure redirect lands here as ?error=oauth or ?error=oauth_failed.
+  useEffect(() => {
+    if (searchParams.get('error')) {
+      setError('Google sign-in failed. Please try again.');
+    }
+  }, []);
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -70,7 +79,7 @@ export default function Register() {
         if (!form.email.trim() || !form.password) {
           throw new Error('Please enter both your email address and password.');
         }
-        await authService.login({
+        await login({
           email: form.email.trim(),
           password: form.password,
         });
@@ -86,7 +95,7 @@ export default function Register() {
         if (form.password !== form.confirm) {
           throw new Error('Passwords do not match. Please re-check.');
         }
-        await authService.register({
+        await register({
           name: form.name.trim(),
           email: form.email.trim(),
           password: form.password,
@@ -246,7 +255,7 @@ export default function Register() {
           <div className="grid grid-cols-2 gap-3 mb-6">
             <button
               type="button"
-              onClick={() => handleDemoFill('student')}
+              onClick={() => authService.startGoogleOAuth()}
               className="flex items-center justify-center gap-2 border border-[#1e1e30] hover:border-[#2e2e45] rounded-xl py-2.5 text-sm text-[#94a3b8] hover:text-white transition-all bg-[#0a0a14]"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">

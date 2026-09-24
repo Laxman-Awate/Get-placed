@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { FormField } from '../common/FormField';
 import { useAuth } from '../../context/AuthContext';
 import { useRoute } from '../../context/RouteContext';
@@ -17,8 +17,8 @@ export function SignupForm() {
       setError('');
       await loginWithGoogle(credentialResponse.credential);
       navigate(destination);
-    } catch {
-      setError('Google signup failed. Please try again.');
+    } catch (err) {
+      setError(err.message || 'Google signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -80,15 +80,7 @@ export function SignupForm() {
         <span>or</span>
       </div>
       <div className="google-auth-wrapper" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-          theme="filled_black"
-          shape="pill"
-          size="large"
-          text="signup_with"
-          width="100%"
-        />
+        <GoogleSignInButton text="signup_with" onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
       </div>
     </form>
   );

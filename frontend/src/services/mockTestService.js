@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import { MOCK_TESTS, MOCK_TEST_HISTORY, MOCK_TEST_SUMMARY } from '../constants/mockTests';
+import { cachedStale, invalidate, peek, TTL } from '../utils/cache';
 
 function getLocalPublishedTests() {
   try {
@@ -10,61 +10,41 @@ function getLocalPublishedTests() {
   }
 }
 
+const TESTS_KEY = 'mock-tests';
+const HISTORY_KEY = 'mock-history';
+const SUMMARY_KEY = 'mock-summary';
+
 export const mockTestService = {
-  getMockTests: async () => {
-    try {
+  peekMockTests: () => peek(TESTS_KEY),
+  peekMockHistory: () => peek(HISTORY_KEY),
+  peekMockSummary: () => peek(SUMMARY_KEY),
+
+  getMockTests: async () =>
+    cachedStale(TESTS_KEY, TTL.MOCK, async () => {
       const data = await apiRequest('/mock-tests');
       const local = getLocalPublishedTests();
       return [...local, ...(data || [])];
-    } catch {
-      const local = getLocalPublishedTests();
-      return [...local, ...MOCK_TESTS];
-    }
-  },
+    }),
 
   getMockTestById: async (id) => {
-    try {
-      return await apiRequest(`/mock-tests/${id}`);
-    } catch {
-      const local = getLocalPublishedTests();
-      const foundLocal = local.find((t) => t.id === id);
-      if (foundLocal) return foundLocal;
-      const foundDefault = MOCK_TESTS.find((t) => t.id === id);
-      if (foundDefault) return foundDefault;
-      throw new Error('Mock test not found');
-    }
+    const local = getLocalPublishedTests();
+    const foundLocal = local.find((t) => t.id === id);
+    if (foundLocal) return foundLocal;
+    return apiRequest(`/mock-tests/${id}`);
   },
 
-  getMockTestHistory: async () => {
-    try {
-      return await apiRequest('/mock-tests/history');
-    } catch {
-      return MOCK_TEST_HISTORY;
-    }
-  },
+  getMockTestHistory: async () => cachedStale(HISTORY_KEY, TTL.MOCK, () => apiRequest('/mock-tests/history')),
 
-  getMockTestSummary: async () => {
-    try {
-      return await apiRequest('/mock-tests/summary');
-    } catch {
-      return MOCK_TEST_SUMMARY;
-    }
-  },
+  getMockTestSummary: async () => cachedStale(SUMMARY_KEY, TTL.MOCK, () => apiRequest('/mock-tests/summary')),
 
   submitAttempt: async (id, answers) => {
-    try {
-      return await apiRequest(`/mock-tests/${id}/attempts`, { method: 'POST', body: JSON.stringify(answers) });
-    } catch {
-      return { score: 85, totalQuestions: Object.keys(answers || {}).length, percentage: 85, status: 'COMPLETED' };
-    }
+    const res = await apiRequest(`/mock-tests/${id}/attempts`, {
+      method: 'POST',
+      body: JSON.stringify(answers),
+    });
+    invalidate(HISTORY_KEY, SUMMARY_KEY);
+    return res;
   },
 
-  getLatestAttempt: async (id) => {
-    try {
-      return await apiRequest(`/mock-tests/${id}/attempts/latest`);
-    } catch {
-      return null;
-    }
-  },
+  getLatestAttempt: async (id) => apiRequest(`/mock-tests/${id}/attempts/latest`),
 };
-

@@ -29,7 +29,9 @@ public class CompanyController {
 
     @GetMapping("/{id}")
     public Object company(@PathVariable String id, HttpServletRequest request) {
-        return content.company(id, currentUser.optionalUserId(request)).orElse(null);
+        return content.company(id, currentUser.optionalUserId(request))
+                .orElseThrow(() -> new com.placepro.exception.ApiException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Company not found."));
     }
 
     @GetMapping("/{id}/preparation")

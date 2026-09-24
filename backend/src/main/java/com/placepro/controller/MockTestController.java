@@ -48,10 +48,6 @@ public class MockTestController {
 
     @GetMapping("/summary")
     public Object summary(HttpServletRequest request) {
-        var history = content.mockHistory(currentUser.optionalUserId(request));
-        int attempted = history.size();
-        int best = history.stream().mapToInt(item -> (Integer) item.get("score")).max().orElse(0);
-        int avg = attempted == 0 ? 0 : (int) Math.round(history.stream().mapToInt(item -> (Integer) item.get("score")).average().orElse(0));
-        return Map.of("attempted", attempted, "bestScore", best, "averageScore", avg, "questionsAttempted", 0);
+        return content.mockSummary(currentUser.optionalUserId(request));
     }
 }

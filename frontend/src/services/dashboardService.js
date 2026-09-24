@@ -1,5 +1,5 @@
 ﻿import { authService } from './authService';
-import { cached, peek, TTL } from '../utils/cache';
+import { cached, cachedStale, peek, subscribe, TTL } from '../utils/cache';
 
 const KEY = 'dashboard';
 
@@ -21,6 +21,16 @@ export function peekDashboard() {
   return peek(KEY);
 }
 
+export function subscribeDashboard(fn) {
+  return subscribe(KEY, fn);
+}
+
+// Stale-while-revalidate: reloads render instantly from the persisted
+// cache (even if TTL expired), then refresh in background.
 export async function getDashboardData() {
-  return cached(KEY, TTL.DASHBOARD, fetchDashboard);
+  return cachedStale(KEY, TTL.DASHBOARD, fetchDashboard);
+}
+
+export async function refreshDashboard() {
+  return cached(KEY, 0, fetchDashboard);
 }
