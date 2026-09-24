@@ -13,6 +13,7 @@ const TargetCompanies = lazy(() => import('./pages/TargetCompanies'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Learn = lazy(() => import('./pages/Learn'));
 const Practice = lazy(() => import('./pages/Practice'));
+const Problem = lazy(() => import('./pages/Problem'));
 const Coding = lazy(() => import('./pages/Coding'));
 const MockTest = lazy(() => import('./pages/MockTest'));
 const TestUI = lazy(() => import('./pages/TestUI'));
@@ -22,6 +23,7 @@ const Interviews = lazy(() => import('./pages/Interviews'));
 const Resume = lazy(() => import('./pages/Resume'));
 const PlacementReady = lazy(() => import('./pages/PlacementReady'));
 const Roadmap = lazy(() => import('./pages/Roadmap'));
+const Profile = lazy(() => import('./pages/Profile'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -63,6 +65,7 @@ export const router = createBrowserRouter([
           { index: true, element: withSuspense(Dashboard) },
           { path: 'learn', element: withSuspense(Learn) },
           { path: 'practice', element: withSuspense(Practice) },
+          { path: 'practice/:id', element: withSuspense(Problem) },
           { path: 'coding', element: withSuspense(Coding) },
           { path: 'mock-test', element: withSuspense(MockTest) },
           { path: 'test-ui', element: withSuspense(TestUI) },
@@ -72,6 +75,7 @@ export const router = createBrowserRouter([
           { path: 'resume', element: withSuspense(Resume) },
           { path: 'placement-ready', element: withSuspense(PlacementReady) },
           { path: 'roadmap', element: withSuspense(Roadmap) },
+          { path: 'profile', element: withSuspense(Profile) },
           { path: 'settings', element: withSuspense(SettingsPage) },
         ],
       },

@@ -7,19 +7,25 @@ export function useCodeExecution() {
 
   const run = async ({ language = 'python', source = '', problemId = null } = {}) => {
     if (!source.trim()) {
+      const output = 'Nothing to run — write some code first.';
       setState('error');
-      setOutput('Nothing to run — write some code first.');
-      return;
+      setOutput(output);
+      return { status: 'error', output };
     }
     setState('running');
     setOutput('Running...');
     try {
       const res = await codeExecutionService.execute({ language, source, problemId });
-      setState(res.status === 'ok' ? 'success' : 'error');
-      setOutput(res.output || 'Done.');
+      const status = res.status === 'ok' ? 'success' : 'error';
+      const output = res.output || 'Done.';
+      setState(status);
+      setOutput(output);
+      return { status, output };
     } catch (e) {
+      const output = `Execution service unreachable: ${e.message}. Your code is saved locally.`;
       setState('error');
-      setOutput(`Execution service unreachable: ${e.message}. Your code is saved locally.`);
+      setOutput(output);
+      return { status: 'error', output };
     }
   };
 

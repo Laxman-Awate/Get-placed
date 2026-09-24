@@ -34,11 +34,14 @@ public class ActivityController {
                   union all select updated_at::date from user_coding_progress where user_id=?
                   union all select attempted_at::date from user_aptitude_progress where user_id=?
                   union all select completed_at::date from mock_test_attempts where user_id=?
+                  union all select practiced_at::date from user_interview_attempts where user_id=?
+                  union all select updated_at::date from user_learning_progress where user_id=?
+                  union all select created_at::date from code_executions where user_id=?
                   union all select activity_date from activity_events where user_id=?
                 ) x
                 where activity_date >= current_date - interval '1 year'
                 group by activity_date
-                """, userId, userId, userId, userId, userId).stream()
+                """, userId, userId, userId, userId, userId, userId, userId, userId).stream()
                 .collect(Collectors.toMap(row -> (String) row.get("day"), row -> (Integer) row.get("count")));
     }
 

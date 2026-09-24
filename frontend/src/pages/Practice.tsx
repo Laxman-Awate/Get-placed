@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Search, CheckCircle, Bookmark, ChevronDown } from 'lucide-react';
 import { useDSASheet } from '../hooks/useDSASheet';
 import { aptitudeService } from '../services/aptitudeService';
@@ -217,6 +218,7 @@ function AptitudeTab() {
 }
 
 export default function Practice() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('dsa');
   const [search, setSearch] = useState('');
   const dsa = useDSASheet();
@@ -301,20 +303,24 @@ export default function Practice() {
               <div className="col-span-2">Status</div>
             </div>
             {dsaFiltered.map((p: any) => (
-              <div key={p.id} className="grid grid-cols-12 items-center px-4 py-3 border-b border-[#1e1e30] last:border-0 hover:bg-[#0f0f1a] transition-colors">
+              <div
+                key={p.id}
+                onClick={() => navigate(`/dashboard/practice/${p.id}`)}
+                className="grid grid-cols-12 items-center px-4 py-3 border-b border-[#1e1e30] last:border-0 hover:bg-[#0f0f1a] cursor-pointer transition-colors group"
+              >
                 <div className="col-span-1">
-                  <button onClick={() => dsa.updateStatus(p.id, !p.solved)} title={p.solved ? 'Mark unsolved' : 'Mark solved'}>
+                  <button onClick={(e) => { e.stopPropagation(); dsa.updateStatus(p.id, !p.solved); }} title={p.solved ? 'Mark unsolved' : 'Mark solved'}>
                     {p.solved ? <CheckCircle size={13} className="text-teal-500" /> : <span className="text-xs text-[#475569]">{p.number}</span>}
                   </button>
                 </div>
-                <div className="col-span-5 text-sm text-[#94a3b8] truncate pr-4">{p.title}</div>
+                <div className="col-span-5 text-sm text-[#94a3b8] group-hover:text-white transition-colors truncate pr-4">{p.title}</div>
                 <div className="col-span-2 text-xs text-[#64748b]">{p.pattern}</div>
                 <div className="col-span-2">
                   <span className={`text-xs px-2 py-0.5 rounded font-medium ${diffColor[p.difficulty] || 'text-[#94a3b8] bg-[#1e1e30]'}`}>{p.difficulty}</span>
                 </div>
                 <div className="col-span-2 flex items-center gap-2 text-xs text-[#475569]">
                   <span>{p.solved ? 'Solved' : p.bookmarked ? 'Saved' : 'Not started'}</span>
-                  <button onClick={() => dsa.toggleBookmark(p.id)} title={p.bookmarked ? 'Unsave' : 'Save'}>
+                  <button onClick={(e) => { e.stopPropagation(); dsa.toggleBookmark(p.id); }} title={p.bookmarked ? 'Unsave' : 'Save'}>
                     <Bookmark size={12} className={p.bookmarked ? 'text-yellow-400 fill-current' : 'text-[#475569] hover:text-[#94a3b8]'} />
                   </button>
                 </div>

@@ -352,9 +352,13 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
+          <button
+            onClick={() => navigate('/dashboard/profile')}
+            title="View profile"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white hover:ring-2 hover:ring-teal-400/50 transition-all"
+          >
             {(user?.name || user?.email || 'U').slice(0, 1).toUpperCase()}
-          </div>
+          </button>
         </div>
       </div>
 

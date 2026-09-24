@@ -59,6 +59,43 @@ public class ContentRepository {
                 """, (rs, rowNum) -> mapDsaProblem(rs), userOrNil(userId), id).stream().findFirst();
     }
 
+    /**
+     * Sample test cases are public (input + expected output). Hidden cases
+     * expose the input only — expected outputs stay server-side for judging.
+     */
+    public Map<String, Object> dsaTestCases(String problemId) {
+        List<Map<String, Object>> samples = jdbc.query("""
+                select id,input_text,expected_output,sort_order
+                from dsa_testcases where problem_id=? and is_sample=true order by sort_order
+                """, (rs, rowNum) -> map()
+                .put("id", rs.getLong("id"))
+                .put("input", rs.getString("input_text"))
+                .put("expected", rs.getString("expected_output"))
+                .put("order", rs.getInt("sort_order")).done(), problemId);
+        List<Map<String, Object>> hidden = jdbc.query("""
+                select id,input_text,sort_order
+                from dsa_testcases where problem_id=? and is_sample=false order by sort_order
+                """, (rs, rowNum) -> map()
+                .put("id", rs.getLong("id"))
+                .put("input", rs.getString("input_text"))
+                .put("order", rs.getInt("sort_order")).done(), problemId);
+        return map().put("samples", samples).put("hidden", hidden)
+                .put("hiddenCount", hidden.size()).done();
+    }
+
+    /** Full case list including hidden expected outputs — judging only, never exposed. */
+    public List<Map<String, Object>> dsaTestCasesForJudging(String problemId) {
+        return jdbc.query("""
+                select input_text,expected_output,stdin_text,is_sample,sort_order
+                from dsa_testcases where problem_id=? order by sort_order
+                """, (rs, rowNum) -> map()
+                .put("input", rs.getString("input_text"))
+                .put("expected", rs.getString("expected_output"))
+                .put("stdin", rs.getString("stdin_text"))
+                .put("sample", rs.getBoolean("is_sample"))
+                .put("order", rs.getInt("sort_order")).done(), problemId);
+    }
+
     public Map<String, Object> upsertDsaProgress(UUID userId, String id, Boolean solved, Boolean bookmarked) {
         jdbc.update("""
                 insert into user_dsa_progress (user_id, problem_id, solved, bookmarked)

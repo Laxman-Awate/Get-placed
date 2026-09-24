@@ -47,6 +47,7 @@ services:
     environment:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-}
+      PISTON_API_URL: https://emkc.org/api/v2
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/placepro
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres

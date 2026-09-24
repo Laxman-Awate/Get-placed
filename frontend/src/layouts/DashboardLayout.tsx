@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router';
 import {
   LayoutDashboard, BookOpen, FlaskConical, Code2, ClipboardList,
-  Building2, MessageSquare, FileText, Settings, Zap, LogOut, Map
+  Building2, MessageSquare, FileText, Settings, Zap, LogOut, Map, User
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/dashboard/interviews', icon: MessageSquare, label: 'Interviews' },
   { to: '/dashboard/resume', icon: FileText, label: 'Resume' },
   { to: '/dashboard/roadmap', icon: Map, label: 'Roadmap' },
+  { to: '/dashboard/profile', icon: User, label: 'Profile' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -75,7 +76,11 @@ export default function DashboardLayout() {
 
         {/* Bottom */}
         <div className="p-3 border-t border-[#1e1e30]">
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1">
+          <button
+            onClick={() => navigate('/dashboard/profile')}
+            title="View profile"
+            className="w-full flex items-center gap-2.5 px-2 py-2 mb-1 rounded-lg hover:bg-[#0f0f1a] transition-colors text-left"
+          >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
               {initials}
             </div>
@@ -83,7 +88,7 @@ export default function DashboardLayout() {
               <div className="text-xs font-medium text-white truncate">{user.name}</div>
               <div className="text-[10px] text-[#64748b] truncate">{user.email}</div>
             </div>
-          </div>
+          </button>
           <button
             onClick={() => {
               authService.logout();

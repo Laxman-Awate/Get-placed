@@ -36,6 +36,13 @@ public class DsaController {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "DSA problem not found."));
     }
 
+    @GetMapping("/problems/{id}/testcases")
+    public Object testCases(@PathVariable String id) {
+        content.dsaProblem(id, null)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "DSA problem not found."));
+        return content.dsaTestCases(id);
+    }
+
     @PatchMapping("/problems/{id}/progress")
     public Object progress(@PathVariable String id, @RequestBody Map<String, Boolean> body, HttpServletRequest request) {
         return content.upsertDsaProgress(currentUser.requiredUserId(request), id, body.get("solved"), body.get("bookmarked"));

@@ -9,6 +9,7 @@ export const dsaService = {
   getDSASheet: async () => cachedStale(SHEET_KEY, TTL.DSA, () => apiRequest('/dsa/sheet')),
   getDSAProblems: async () => cachedStale(PROBLEMS_KEY, TTL.DSA, () => apiRequest('/dsa/problems')),
   getDSAProblemById: async (id) => apiRequest(`/dsa/problems/${id}`),
+  getTestCases: async (id) => apiRequest(`/dsa/problems/${id}/testcases`),
   updateProblemStatus: async (id, solved) => {
     const res = await apiRequest(`/dsa/problems/${id}/progress`, {
       method: 'PATCH',

@@ -17,7 +17,7 @@ export default defineConfig({
         manualChunks: {
           // Keep the heavy editor out of the initial bundle.
           'vendor-react': ['react', 'react-dom', 'react-router'],
-          'vendor-monaco': ['@monaco-editor/react'],
+          'vendor-monaco': ['@monaco-editor/react', 'monaco-editor'],
         },
       },
     },
